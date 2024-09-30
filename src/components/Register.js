@@ -1,84 +1,161 @@
-import React from "react";
+import React, { useState } from "react";
 import "../App.css";
 import { Link } from "react-router-dom";
+import axios from "axios"; // Import axios for making API requests
+import { useNavigate } from "react-router-dom";
 function Register() {
-  const handleLogin = async (e, userType) => {
-    e.preventDefault();
-    setError(null); // Reset error state
-    let loginUrl;
-    if (userType === "customer") {
-      loginUrl = "http://localhost:3001/api/auth/login";
-    } else if (userType === "owner") {
-      loginUrl = "http://localhost:3001/api/owners/login";
+  // State for form fields
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState("customer"); // Default role as "customer"
+  const [errorMessage, setErrorMessage] = useState(""); // For displaying error messages
+  const [successMessage, setSuccessMessage] = useState(""); // For displaying success messages
+  const navigate = useNavigate();
+  // Form validation
+  const validateForm = () => {
+    if (!firstName || !lastName || !email || !password || !confirmPassword) {
+      setErrorMessage("Please fill in all fields.");
+      return false;
     }
+    if (password !== confirmPassword) {
+      setErrorMessage("Passwords do not match.");
+      return false;
+    }
+    setErrorMessage(""); // Clear error if validation passes
+    return true;
+  };
+
+  // Handle form submission
+  const handleRegister = async (e) => {
+    e.preventDefault(); // Prevent form from refreshing the page
+    if (!validateForm()) return; // Stop if form is not valid
+
+    const fullName = `${firstName} ${lastName}`;
+    const payload = {
+      name: fullName,
+      email,
+      password,
+      role,
+    };
+
     try {
-      const response = await axios.post(loginUrl, {
-        email,
-        password,
-      });
-      if (response.data.message === "Login successful") {
-        navigate("/Customerdashboard");
-      } else if (userType === "owner") {
-        navigate("/Ownerdashboard");
-      } else {
-        setError(response.data.message);
+      const response = await axios.post("http://localhost:3001/api/auth/register", payload);
+      if (response.status === 201) {
+        setSuccessMessage("Registration successful! Please log in.");
+        setErrorMessage("");
+        setTimeout(() => {
+          navigate("/");
+        }, 1500);
       }
-    } catch (err) {
-      setError("Failed to login. Please check your credentials.");
+    } catch (error) {
+      setErrorMessage(error.response?.data?.message || "Registration failed.");
     }
   };
+
   return (
-    <div class="bg-gradient-primary appStyle">
-      <div class="container p-1">
-        <div class="card o-hidden border-0 shadow-lg my-5">
-          <div class="card-body p-0">
-            <div class="row">
-              <div class="col-lg-5 d-none d-lg-block bg-register-image"></div>
-              <div class="col-lg-7">
-                <div class="p-5">
-                  <div class="text-center">
-                    <h1 class="h4 text-gray-900 mb-4">Create an Account!</h1>
+    <div className="bg-gradient-primary appStyle">
+      <div className="container p-1">
+        <div className="card o-hidden border-0 shadow-lg my-5">
+          <div className="card-body p-0">
+            <div className="row">
+              <div className="col-lg-5 d-none d-lg-block bg-register-image"></div>
+              <div className="col-lg-7">
+                <div className="p-5">
+                  <div className="text-center">
+                    <h1 className="h4 text-gray-900 mb-4">Create an Account!</h1>
                   </div>
-                  <form class="user">
-                    <div class="form-group row">
-                      <div class="col-sm-6 mb-3 mb-sm-0">
-                        <input type="text" class="form-control form-control-user" id="exampleFirstName" placeholder="First Name"></input>
+
+                  {/* Error and Success Messages */}
+                  {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
+                  {successMessage && <div className="alert alert-success">{successMessage}</div>}
+
+                  <form className="user" onSubmit={handleRegister}>
+                    <div className="form-group row">
+                      <div className="col-sm-6 mb-3 mb-sm-0">
+                        <input
+                          type="text"
+                          className="form-control form-control-user"
+                          id="exampleFirstName"
+                          placeholder="First Name"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                        />
                       </div>
-                      <div class="col-sm-6">
-                        <input type="text" class="form-control form-control-user" id="exampleLastName" placeholder="Last Name"></input>
+                      <div className="col-sm-6">
+                        <input
+                          type="text"
+                          className="form-control form-control-user"
+                          id="exampleLastName"
+                          placeholder="Last Name"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                        />
                       </div>
                     </div>
-                    <div class="form-group">
-                      <input type="email" class="form-control form-control-user" id="exampleInputEmail" placeholder="Email Address"></input>
+                    <div className="form-group">
+                      <input
+                        type="email"
+                        className="form-control form-control-user"
+                        id="exampleInputEmail"
+                        placeholder="Email Address"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
                     </div>
-                    <div class="form-group row">
-                      <div class="col-sm-6 mb-3 mb-sm-0">
-                        <input type="password" class="form-control form-control-user" id="exampleInputPassword" placeholder="Password"></input>
-                      </div>
-                      <div class="col-sm-6">
+                    <div className="form-group row">
+                      <div className="col-sm-6 mb-3 mb-sm-0">
                         <input
                           type="password"
-                          class="form-control form-control-user"
+                          className="form-control form-control-user"
+                          id="exampleInputPassword"
+                          placeholder="Password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                        />
+                      </div>
+                      <div className="col-sm-6">
+                        <input
+                          type="password"
+                          className="form-control form-control-user"
                           id="exampleRepeatPassword"
                           placeholder="Repeat Password"
-                        ></input>
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                        />
                       </div>
                     </div>
-                    <a class="btn btn-primary btn-user btn-block">Register Account</a>
-                    <hr></hr>
-                    <a class="btn btn-google btn-user btn-block">
-                      <i class="fab fa-google fa-fw"></i> Register with Google
-                    </a>
-                    <a class="btn btn-facebook btn-user btn-block">
-                      <i class="fab fa-facebook-f fa-fw"></i> Register with Facebook
-                    </a>
-                  </form>
-                  <hr></hr>
 
-                  <div class="text-center">
-                    <a class="small">
-                      <Link to="/">Already have an account? Login!</Link>
-                    </a>
+                    {/* Role Selection */}
+                    <div className="form-group">
+                      {/* Add a label for accessibility */}
+                      <select
+                        className="form-control"
+                        id="roleSelect" // Add an ID to associate with the label
+                        value={role}
+                        onChange={(e) => {
+                          console.log(`Selected role: ${e.target.value}`); // Log the selected role
+                          setRole(e.target.value); // Update the role in state
+                        }}
+                      >
+                        <option value="customer">Customer</option>
+                        {/* If you want to add more roles, you can uncomment and add options here */}
+                        {/* <option value="owner">Owner</option> */}
+                      </select>
+                    </div>
+
+                    <button type="submit" className="btn btn-primary btn-user btn-block">
+                      Register Account
+                    </button>
+                  </form>
+
+                  <hr />
+                  <div className="text-center">
+                    <Link to="/" className="small">
+                      Already have an account? Login!
+                    </Link>
                   </div>
                 </div>
               </div>
