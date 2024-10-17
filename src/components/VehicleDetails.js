@@ -189,7 +189,7 @@ function VehicleDetails({ vehicles }) {
                 />
               </div>
               <div className="form-group col-12">
-                <label htmlFor="dropOffAddress">Drop location</label>
+                <label htmlFor="dropOffAddress">Drop location ($100 fee, If pickup and drop address aren't the same.)</label>)
                 <input
                   type="text"
                   id="dropOffAddress"

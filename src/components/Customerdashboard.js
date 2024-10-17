@@ -381,7 +381,7 @@ function Customerdashboard() {
                       />
                     ))
                   ) : (
-                    <h3>No rentals available.</h3>
+                    <h3>No Vehicles available.</h3>
                   )}
                 </div>
               </div>
