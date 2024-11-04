@@ -1,22 +1,32 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import profileImage from "../assets/undraw_profile_1.svg";
 
 function Customerdashboard() {
-  const [vehicles, setVehicles] = useState([]); // State to store vehicle data
-  const [rentals, setRentals] = useState([]); // State to store rental data
+  const [vehicles, setVehicles] = useState([]);
+  const [rentals, setRentals] = useState([]);
   const [activeSection, setActiveSection] = useState("vehicles");
   const [error, setError] = useState(null);
-  const [selectedFilter, setSelectedFilter] = useState(""); // State to track the selected filter
+  const [selectedFilter, setSelectedFilter] = useState("");
+  const [showDropOffModal, setShowDropOffModal] = useState(false);
+  const [dropOffOdometer, setDropOffOdometer] = useState("");
+  const [currentRental, setCurrentRental] = useState(null);
+  const [creditCard, setCreditCard] = useState({
+    number: "",
+    expiry: "",
+    cvv: "",
+  });
+  const [odometerDifference, setOdometerDifference] = useState(0);
+  const [totalCharge, setTotalCharge] = useState(0);
 
-  // Fetch data from the API on component mount
   useEffect(() => {
     async function fetchVehicles() {
       try {
         const response = await axios.get(
           "http://localhost:3001/api/customers/vehicles"
         );
-        setVehicles(response.data); // Set vehicles data in the state
+        setVehicles(response.data);
       } catch (error) {
         console.error("Error fetching vehicles:", error);
       }
@@ -24,15 +34,9 @@ function Customerdashboard() {
 
     const fetchRentals = async () => {
       try {
-        // Retrieve the userDetails object from sessionStorage
         const userDetails = JSON.parse(sessionStorage.getItem("userDetails"));
-
-        // Check if userDetails and _id exist
         if (userDetails && userDetails._id) {
-          // Construct the API URL using the _id from userDetails
           const apiUrl = `http://localhost:3001/api/customers/rentals/${userDetails._id}`;
-
-          // Fetch the rentals data specific to the customer
           const rentalsResponse = await axios.get(apiUrl);
           setRentals(rentalsResponse.data);
         } else {
@@ -48,31 +52,25 @@ function Customerdashboard() {
     fetchRentals();
   }, []);
 
-  // Filter vehicles based on selected type (only for vehicles section)
   const filteredVehicles =
     selectedFilter === ""
       ? vehicles
       : vehicles.filter((vehicle) => vehicle.type === selectedFilter);
 
-  // Function to cancel a rental
   const handleCancelRental = async (rentalId) => {
     try {
-      // Call the API to cancel the rental using the rental's unique _id
       const cancelUrl = `http://localhost:3001/api/customers/cancel/${rentalId}`;
-
-      // Await the response from the cancellation
       const cancelResponse = await axios.put(cancelUrl);
 
-      // Check if the cancellation was successful
       if (cancelResponse.status === 200) {
-        // After successful cancellation, refetch the rentals data
         const userDetails = JSON.parse(sessionStorage.getItem("userDetails"));
         const rentalsResponse = await axios.get(
           `http://localhost:3001/api/customers/rentals/${userDetails._id}`
         );
         setRentals(rentalsResponse.data);
-
-        alert("Rental canceled successfully!... Money will be refunded... Except the deposit.");
+        alert(
+          "Rental canceled successfully!... Money will be refunded... Except the deposit."
+        );
       } else {
         alert("Failed to cancel rental. Please try again.");
       }
@@ -81,124 +79,270 @@ function Customerdashboard() {
       alert("Failed to cancel rental. Please try again.");
     }
   };
-  const handleDropOffVehicle = async (rentalId) => {
-    try {
-      // Call the API to drop off the vehicle using the rental's unique _id
-      const dropOffUrl = `http://localhost:3001/api/customers/rentals/dropoff/${rentalId}`;
 
-      // Await the response from the drop-off API
-      const dropOffResponse = await axios.put(dropOffUrl);
-
-      // Check if the drop-off was successful
-      if (dropOffResponse.status === 200) {
-        // After successful drop-off, refetch the rentals data
-        const userDetails = JSON.parse(sessionStorage.getItem("userDetails"));
-        const rentalsResponse = await axios.get(
-          `http://localhost:3001/api/customers/rentals/${userDetails._id}`
+  const handleDropOffClick = async (rental) => {
+    const dayDifference = (new Date(rental?.returnDate) - new Date(rental?.pickupDate)) / (1000 * 60 * 60 * 24);
+  
+    if (dayDifference > 1) {
+      setCurrentRental(rental);
+      setOdometerDifference("");
+      setDropOffOdometer("");
+      setShowDropOffModal(true);
+      setCreditCard({
+        number: "",
+        expiry: "",
+        cvv: "",
+      });
+    } else {
+      try {
+        const response = await axios.put(
+          `http://localhost:3001/api/customers/rentals/dropoff/${rental._id}`,
+          {
+            totalCharge:0,
+          }
         );
-        setRentals(rentalsResponse.data);
-
-        alert("Vehicle drop-off completed successfully!");
-      } else {
-        alert("Failed to complete vehicle drop-off. Please try again.");
+          console.log(response)
+        if (response.data.message === "Vehicle drop-off completed successfully") {
+          alert("Vehicle drop-off completed successfully!");
+          return response.data;
+        } else {
+          alert("Vehicle drop-off failed. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error in vehicle drop-off:", error);
+        alert("Vehicle drop-off failed. Please try again.");
       }
-    } catch (error) {
-      console.error("Error completing vehicle drop-off:", error);
-      alert("Failed to complete vehicle drop-off. Please try again.");
     }
   };
+  
 
-  // Card Component for Vehicles and Rentals
+  const handleDropOffSubmit = async () => {
+    if (
+      parseInt(dropOffOdometer) <=
+      parseInt(currentRental?.vehicleId?.currentOdoMeter)
+    ) {
+      alert(
+        "Drop-off odometer reading should be higher than the previous reading."
+      );
+      return;
+    }
+    const difference =
+      parseInt(dropOffOdometer) -
+      parseInt(currentRental?.vehicleId?.currentOdoMeter);
+    const charge = difference * parseInt(currentRental?.vehicleId?.pricePerDay);
+    setOdometerDifference(difference);
+    setTotalCharge(charge);
+  };
+
+  const handleCreditCardChange = (e) => {
+    const { name, value } = e.target;
+    setCreditCard({ ...creditCard, [name]: value });
+  };
+
+  const validateCreditCard = () => {
+    const cardRegex = /^\d{16}$/;
+    const expiryRegex = /^(0[1-9]|1[0-2])\/\d{2}$/;
+    const cvvRegex = /^\d{3}$/;
+
+    return (
+      cardRegex.test(creditCard.number) &&
+      expiryRegex.test(creditCard.expiry) &&
+      cvvRegex.test(creditCard.cvv)
+    );
+  };
+
+  const handlePaymentSubmit = (currentRental) => {
+    console.log(currentRental);
+    if (!validateCreditCard()) {
+      alert("Invalid credit card details. Please check and try again.");
+      return;
+    }
+
+    try {
+      const response = axios.put(
+        `http://localhost:3001/api/customers/rentals/dropoff/${currentRental._id}`,
+        {
+          totalCharge,
+        }
+      );
+
+      if (response.data.message === "Vehicle drop-off completed successfully") {
+        alert("Vehicle drop-off completed successfully!");
+        return response.data;
+      } else {
+        alert("Vehicle drop-off failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error in vehicle drop-off:", error);
+      alert("Vehicle drop-off failed. Please try again.");
+    }
+    setShowDropOffModal(false);
+  };
+
   const VehicleCard = ({ vehicle, isRental }) => {
-    const isPickupDateBeforeToday = new Date(vehicle.pickupDate) <= new Date(); // Check if pickup date is before today
+    if (!vehicle) return null;
+
+    const isPickupDateBeforeToday = vehicle.pickupDate
+      ? new Date(vehicle.pickupDate) <= new Date()
+      : false;
 
     return (
       <div key={vehicle.id || vehicle._id} className="col-md-6 mb-3">
-        <div className="card card-custom position-relative">
-          {/* Status Badge */}
+        <div
+          className="card card-custom position-relative"
+          style={{
+            borderRadius: "8px",
+            boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+            overflow: "hidden",
+          }}
+        >
           {isRental && (
             <span
               className="badge badge-info position-absolute"
-              style={{ top: "10px", right: "10px" }}
+              style={{ top: "10px", right: "10px", fontSize: "12px" }}
             >
               Status: {vehicle.status}
             </span>
           )}
           <div className="row g-0">
-            <div className="col-md-4">
+            <div className="col-md-5" style={{ width: "40%" }}>
               <img
-                src={vehicle.imageUrl}
+                src={vehicle.imageUrl || ""}
                 className="img-fluid rounded-start"
-                alt={`${vehicle.make} ${vehicle.model}`}
+                style={{
+                  height: "100%",
+                  width: "100%",
+                  objectFit: "cover",
+                }}
+                alt={`${vehicle.make || ""} ${vehicle.model || ""}`}
               />
             </div>
-            <div className="col-md-8">
-              <div className="card-body d-flex flex-column">
-                <h5 className="card-title">
-                  {vehicle.make} {vehicle.model}
+            <div className="col-md-7" style={{ width: "60%", padding: "15px" }}>
+              <div
+                className="card-body d-flex flex-column"
+                style={{ fontSize: "12px" }}
+              >
+                <h5
+                  className="card-title"
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    marginBottom: "10px",
+                  }}
+                >
+                  {vehicle.make || "N/A"} {vehicle.model || "N/A"}
                 </h5>
                 {!isRental && (
                   <>
-                    <p className="card-capacity">
-                      Capacity: {vehicle.capacity} people
+                    <p
+                      className="card-type"
+                      style={{ margin: "2.5px 0", color: "#555" }}
+                    >
+                      <strong>Type:</strong> {vehicle.type || "N/A"}
                     </p>
-                    <p className="card-type">Type: {vehicle.type}</p>
-                    <p className="card-insurance">
-                      Insurance: ${vehicle.insurance}
+                    <p
+                      className="card-capacity"
+                      style={{ margin: "2.5px 0", color: "#555" }}
+                    >
+                      <strong>Capacity:</strong> {vehicle?.capacity || "5"}{" "}
+                      people
                     </p>
-                    <p className="card-price">
-                      Price per day: ${vehicle.dailyPrice}
+                    <p
+                      className="card-insurance"
+                      style={{ margin: "2.5px 0", color: "#555" }}
+                    >
+                      <strong>Insurance:</strong> ${vehicle.insurance || "N/A"}
+                    </p>
+                    <p
+                      className="card-price"
+                      style={{ margin: "2.5px 0", color: "#555" }}
+                    >
+                      <strong>Daily Price (For 1 day):</strong> $
+                      {vehicle.dailyPrice || "N/A"}
+                    </p>
+                    <p
+                      className="card-price"
+                      style={{ margin: "2.5px 0", color: "#555" }}
+                    >
+                      <strong>Price per day (More than 1 day):</strong> $
+                      {vehicle.pricePerDay || "N/A"}
+                    </p>
+                    <p
+                      className="card-price"
+                      style={{ margin: "2.5px 0", color: "#555" }}
+                    >
+                      <strong>ODO Meter :</strong>{" "}
+                      {vehicle.currentOdoMeter || "N/A"}
                     </p>
                   </>
                 )}
                 {isRental && (
                   <>
-                    <p className="card-pickup">
-                      Pickup Date: {vehicle.pickupDate}
+                    <p
+                      className="card-pickup"
+                      style={{ margin: "2.5px 0", color: "#555" }}
+                    >
+                      <strong>Pickup Date:</strong>{" "}
+                      {vehicle.pickupDate || "N/A"}
                     </p>
-                    <p className="card-dropoff">
-                      Dropoff Date: {vehicle.returnDate}
+                    <p
+                      className="card-dropoff"
+                      style={{ margin: "2.5px 0", color: "#555" }}
+                    >
+                      <strong>Dropoff Date:</strong>{" "}
+                      {vehicle.returnDate || "N/A"}
                     </p>
-                    {/* <p className="card-total-days">
-                      Total Days: {vehicle.totalDays}
-                    </p> */}
-
-                    <p className="card-deposit">Deposit: ${vehicle.deposit}</p>
-                    <p className="card-total-price">
-                      Total Price: ${vehicle.totalPrice}
+                    <p
+                      className="card-deposit"
+                      style={{ margin: "2.5px 0", color: "#555" }}
+                    >
+                      <strong>Deposit:</strong> ${vehicle.deposit || "N/A"}
+                    </p>
+                    <p
+                      className="card-total-price"
+                      style={{ margin: "2.5px 0", color: "#555" }}
+                    >
+                      <strong>Total Price:</strong> $
+                      {vehicle.totalPrice || "N/A"}
                     </p>
                   </>
                 )}
-
-                {/* Show buttons for rentals based on status and pickup date */}
-                <div className="book-btn mt-auto">
+                <div className="book-btn mt-auto d-flex justify-content-end">
                   {isRental && vehicle.status === "active" && (
                     <>
-                      {new Date(vehicle.pickupDate) <= new Date() ? (
-                        // Show Cancel button if the pickup date is today or before
+                      {isPickupDateBeforeToday && (
                         <button
-                          className="btn btn-danger mt-2 me-2"
-                          style={{ height: "38px" }}
-                          onClick={() => handleCancelRental(vehicle._id)} // Using _id to cancel rental
+                          className="btn btn-danger btn-sm mt-2 me-2"
+                          style={{ height: "30px", fontSize: "12px" }}
+                          onClick={() => handleCancelRental(vehicle._id)}
                         >
                           Cancel Rental
                         </button>
-                      ) : null}
-
-                      {/* Always show Drop Off button if the rental is active */}
+                      )}
                       <button
-                        className="btn btn-success mt-2"
-                        style={{ height: "38px", marginLeft: "10px" }} // Adjust the height to match badge size
-                        onClick={() => handleDropOffVehicle(vehicle._id)}
+                        className="btn btn-success btn-sm mt-2 me-2"
+                        style={{
+                          height: "30px",
+                          fontSize: "12px",
+                          marginLeft: "10px",
+                        }}
+                        onClick={() => handleDropOffClick(vehicle)}
                       >
                         Drop Off
                       </button>
                     </>
                   )}
-                  {!isRental && (
+                  {!isRental && vehicle._id && (
                     <Link
                       to={`/vehicle/${vehicle._id}`}
-                      className="btn btn-primary mt-auto"
+                      className="btn btn-primary mt-2"
+                      style={{
+                        fontSize: "12px",
+                        position: "absolute",
+                        right: "10px",
+                        bottom: "10px",
+                        padding: "5px 10px",
+                      }}
                     >
                       Book
                     </Link>
@@ -213,14 +357,14 @@ function Customerdashboard() {
   };
 
   return (
-    <div>
+    <div className="customerdashboard-container">
       <div id="page-top">
         <div id="wrapper">
           <ul
             className="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion"
             id="accordionSidebar"
+            style={{ fontSize: "12px" }}
           >
-            {/* Dashboard Nav Item */}
             <li
               className={`nav-item ${
                 activeSection === "dashboard" ? "active" : ""
@@ -233,11 +377,7 @@ function Customerdashboard() {
                 <b>CUSTOMER DASHBOARD</b>
               </a>
             </li>
-
             <hr className="sidebar-divider" />
-            <div className="sidebar-heading"></div>
-
-            {/* Vehicles Nav Item */}
             <li
               className={`nav-item ${
                 activeSection === "vehicles" ? "active" : ""
@@ -254,8 +394,6 @@ function Customerdashboard() {
                 ></i>
               </a>
             </li>
-
-            {/* Rentals Nav Item */}
             <li
               className={`nav-item ${
                 activeSection === "rentals" ? "active" : ""
@@ -272,8 +410,6 @@ function Customerdashboard() {
                 ></i>
               </a>
             </li>
-
-            {/* Logout Nav Item */}
             <li className="nav-item">
               <Link to="/" className="nav-link">
                 <b>Logout</b>
@@ -281,25 +417,16 @@ function Customerdashboard() {
             </li>
           </ul>
 
-          <div id="content-wrapper" className="d-flex flex-column">
+          <div
+            id="content-wrapper"
+            className="d-flex flex-column"
+            style={{ fontSize: "12px" }}
+          >
             <div id="content">
               <nav className="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-                <button
-                  id="sidebarToggleTop"
-                  className="btn btn-link d-md-none rounded-circle mr-3"
-                >
-                  <i className="fa fa-bars"></i>
-                </button>
                 <ul className="navbar-nav ml-auto">
                   <li className="nav-item dropdown no-arrow d-sm-none">
-                    <a
-                      className="nav-link dropdown-toggle"
-                      id="searchDropdown"
-                      role="button"
-                      data-toggle="dropdown"
-                      aria-haspopup="true"
-                      aria-expanded="false"
-                    >
+                    <a className="nav-link dropdown-toggle" id="searchDropdown">
                       <i className="fas fa-search fa-fw"></i>
                     </a>
                     <div
@@ -326,19 +453,31 @@ function Customerdashboard() {
                   </li>
                   <div className="topbar-divider d-none d-sm-block"></div>
                   <li className="nav-item dropdown no-arrow">
-                    <a>
-                      <span className="mr-2 d-none d-lg-inline text-bold-600 ">
-                        {JSON.parse(sessionStorage.getItem("userDetails"))
-                          ?.name || ""}
-                      </span>
-                    </a>
-                  </li>
+  <a
+   
+    className="d-flex align-items-center"
+    style={{ textDecoration: "none", color: "grey",marginRight: "10px" }}
+  >
+    <img
+      className="img-profile rounded-circle"
+      src={profileImage}
+      alt="Profile"
+      style={{ width: "30px", height: "30px", marginRight: "8px" }}
+    />
+    <span
+      className="d-none d-lg-inline text-bold-600"
+      style={{ fontSize: "12px" }}
+    >
+      {JSON.parse(sessionStorage.getItem("userDetails"))?.name || ""}<br></br>Role: Customer
+    </span>
+  </a>
+</li>
+
+
                 </ul>
               </nav>
 
-              <div className="container-fluid">
-                
-                {/* Filter Section only for Vehicles */}
+              <div className="container-fluid" style={{ fontSize: "12px" }}>
                 {activeSection === "vehicles" && (
                   <div className="row mb-3">
                     <div className="col-md-6">
@@ -346,24 +485,17 @@ function Customerdashboard() {
                         className="form-select"
                         value={selectedFilter}
                         onChange={(e) => setSelectedFilter(e.target.value)}
+                        style={{ fontSize: "12px" }}
                       >
                         <option value="">All Vehicles</option>
                         <option value="car">Cars</option>
                         <option value="truck">Trucks</option>
                       </select>
                     </div>
-                    <div className="col-md-6 text-end">
-                      {/* <button
-                        className="btn btn-secondary"
-                        onClick={() => setSelectedFilter("")}
-                      >
-                        Clear Filter
-                      </button> */}
-                    </div>
                   </div>
                 )}
 
-                <div className="row">
+                <div className="row" style={{ fontSize: "12px" }}>
                   {activeSection === "vehicles" &&
                   filteredVehicles.length > 0 ? (
                     filteredVehicles.map((vehicle, index) => (
@@ -375,13 +507,13 @@ function Customerdashboard() {
                   ) : activeSection === "rentals" && rentals.length > 0 ? (
                     rentals.map((rental, index) => (
                       <VehicleCard
-                        key={rental._id || index} // Using _id as rental ID
+                        key={rental._id || index}
                         vehicle={rental}
-                        isRental={true} // Pass true for rentals
+                        isRental={true}
                       />
                     ))
                   ) : (
-                    <h3>No Vehicles available.</h3>
+                    <h3 style={{ fontSize: "12px" }}>No Vehicles available.</h3>
                   )}
                 </div>
               </div>
@@ -389,6 +521,180 @@ function Customerdashboard() {
           </div>
         </div>
       </div>
+
+      {showDropOffModal && currentRental && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <button
+              className="close-button"
+              onClick={() => setShowDropOffModal(false)}
+            >
+              &times;
+            </button>
+            <h4>Drop Off Vehicle</h4>
+            <label className="modal-label">
+              Drop-off Odometer:
+              <input
+                type="number"
+                value={dropOffOdometer}
+                onChange={(e) => setDropOffOdometer(e.target.value)}
+                className="modal-input"
+              />
+            </label>
+            <button onClick={handleDropOffSubmit} className="calculate-button">
+              Calculate Total
+            </button>
+
+            {odometerDifference > 0 && (
+              <div className="payment-section">
+                <p>
+                  <strong>Odometer Difference:</strong> {odometerDifference}{" "}
+                  miles
+                </p>
+                <p>
+                  <strong>Total Charge:</strong> ${totalCharge}
+                </p>
+                <h5>Enter Payment Details</h5>
+                <div className="credit-card-fields">
+                  <label className="modal-label">
+                    Card Number:
+                    <input
+                      type="text"
+                      name="number"
+                      maxLength="16"
+                      value={creditCard.number}
+                      onChange={handleCreditCardChange}
+                      className="modal-input"
+                    />
+                  </label>
+                  <label className="modal-label">
+                    Expiry (MM/YY):
+                    <input
+                      type="text"
+                      name="expiry"
+                      maxLength="5"
+                      value={creditCard.expiry}
+                      onChange={handleCreditCardChange}
+                      className="modal-input"
+                    />
+                  </label>
+                  <label className="modal-label">
+                    CVV:
+                    <input
+                      type="text"
+                      name="cvv"
+                      maxLength="3"
+                      value={creditCard.cvv}
+                      onChange={handleCreditCardChange}
+                      className="modal-input"
+                    />
+                  </label>
+                </div>
+                <button
+                  onClick={() => handlePaymentSubmit(currentRental)}
+                  className="pay-button"
+                >
+                  Pay Now
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          overflow-y: auto;
+        }
+        .modal-content {
+          position: relative;
+          background: #fff;
+          padding: 20px;
+          border-radius: 8px;
+          max-width: 400px;
+          width: 90%;
+          max-height: 80vh;
+          overflow-y: auto;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+          text-align: center;
+          font-family: Arial, sans-serif;
+        }
+        .close-button {
+          position: absolute;
+          top: 5px;
+          right: 10px;
+          background: none;
+          border: none;
+          font-size: 18px;
+          color: #333;
+          cursor: pointer;
+        }
+        h4 {
+          font-size: 16px;
+          margin-bottom: 15px;
+        }
+        .modal-label {
+          display: block;
+          margin-top: 10px;
+          font-size: 12px;
+          color: #333;
+        }
+        .modal-input {
+          width: 100%;
+          padding: 6px;
+          margin-top: 4px;
+          border-radius: 4px;
+          border: 1px solid #ddd;
+          font-size: 12px;
+        }
+        .calculate-button,
+        .pay-button {
+          margin-top: 12px;
+          padding: 8px 14px;
+          border-radius: 4px;
+          border: none;
+          font-size: 12px;
+          color: #fff;
+          cursor: pointer;
+        }
+        .calculate-button {
+          background-color: #007bff;
+        }
+        .pay-button {
+          background-color: #28a745;
+          margin-top: 10px;
+          float: right;
+        }
+        .payment-section {
+          margin-top: 12px;
+          text-align: left;
+          font-size: 12px;
+          position: relative;
+        }
+        .credit-card-fields {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+          justify-content: space-between;
+        }
+        .credit-card-fields .modal-label {
+          flex: 1;
+          margin-top: 6px;
+        }
+        .credit-card-fields .modal-input {
+          width: 100%;
+        }
+      `}</style>
     </div>
   );
 }

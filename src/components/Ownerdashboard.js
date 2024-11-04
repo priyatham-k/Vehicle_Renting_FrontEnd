@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-
+import profileImage from "../assets/undraw_profile_1.svg";
 function Ownerdashboard() {
   const [vehicles, setVehicles] = useState([]);
   const [rentals, setRentals] = useState([]);
@@ -19,6 +19,8 @@ function Ownerdashboard() {
     imageUrl: "", // Base64 image
     vinNumber: "", // vinNumber number
     mileage: "", // Mileage
+    pricePerDay: "", // New field added
+    currentOdoMeter: "",
   });
   const [formErrors, setFormErrors] = useState({});
 
@@ -62,10 +64,14 @@ function Ownerdashboard() {
     if (!newVehicle.imageUrl) errors.imageUrl = "Image is required";
     if (!newVehicle.vinNumber) errors.vinNumber = "vinNumber is required";
     if (!newVehicle.mileage) errors.mileage = "Mileage is required";
+    if (!newVehicle.pricePerDay) errors.pricePerDay = "pricePerDay is required";
+    if (!newVehicle.currentOdoMeter)
+      errors.currentOdoMeter = "currentOdoMeter is required";
     return errors;
   };
 
   const handleDeleteVehicle = async (vehicleId) => {
+    console.log("*******", vehicleId);
     console.log("deleteVehicle", vehicleId);
     try {
       await axios.delete(
@@ -100,6 +106,8 @@ function Ownerdashboard() {
           imageUrl: "",
           vinNumber: "", // Reset vinNumber
           mileage: "", // Reset Mileage
+          pricePerDay: "",
+          currentOdoMeter: "",
         });
         setShowModal(false);
       } catch (error) {
@@ -135,7 +143,7 @@ function Ownerdashboard() {
 
   // Calculate total price of rentals
   const calculateTotalRentalsPrice = () => {
-    let totalPrice =  0;
+    let totalPrice = 0;
     rentals.forEach((rental) => {
       if (rental.status === "active" || rental.status === "Completed") {
         totalPrice += rental.totalPrice;
@@ -174,6 +182,7 @@ function Ownerdashboard() {
             className={`nav-item ${
               activeSection === "vehicles" ? "active" : ""
             }`}
+            style={{ cursor: "pointer" }}
           >
             <a
               className="nav-link"
@@ -182,7 +191,11 @@ function Ownerdashboard() {
               <span>Vehicles</span>
               <i
                 className="fas fa-car"
-                style={{ marginLeft: "12px", fontSize: "1.1rem" }}
+                style={{
+                  marginLeft: "12px",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                }}
               ></i>
             </a>
           </li>
@@ -192,19 +205,24 @@ function Ownerdashboard() {
             className={`nav-item ${
               activeSection === "rentals" ? "active" : ""
             }`}
+            style={{ cursor: "pointer" }}
           >
             <a className="nav-link" onClick={() => setActiveSection("rentals")}>
               <span>Rentals</span>
               <i
                 className="fas fa-clipboard-list"
-                style={{ marginLeft: "12px", fontSize: "1.1rem" }}
+                style={{
+                  marginLeft: "12px",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                }}
               ></i>
             </a>
           </li>
 
           {/* Logout Nav Item */}
           <li className="nav-item">
-            <a className="nav-link">
+            <a className="nav-link" style={{ textDecoration: "none" }}>
               <Link to="/">
                 <span className="text-white">Logout</span>
               </Link>
@@ -222,14 +240,26 @@ function Ownerdashboard() {
                 <i className="fa fa-bars"></i>
               </button>
               <ul className="navbar-nav ml-auto">
-                <li className="nav-item dropdown no-arrow">
-                  <a>
-                    <span className="mr-2 d-none d-lg-inline text-gray-600 small">
-                      {JSON.parse(sessionStorage.getItem("userDetails"))
-                        ?.name || ""}
-                    </span>
-                  </a>
-                </li>
+              <li className="nav-item dropdown no-arrow">
+  <a
+   
+    className="d-flex align-items-center"
+    style={{ textDecoration: "none", color: "grey",marginRight: "10px" }}
+  >
+    <img
+      className="img-profile rounded-circle"
+      src={profileImage}
+      alt="Profile"
+      style={{ width: "30px", height: "30px", marginRight: "8px" }}
+    />
+    <span
+      className="d-none d-lg-inline text-bold-600"
+      style={{ fontSize: "12px" }}
+    >
+      {JSON.parse(sessionStorage.getItem("userDetails"))?.name || ""}<br></br>Role: Owner
+    </span>
+  </a>
+</li>
               </ul>
             </nav>
 
@@ -267,6 +297,10 @@ function Ownerdashboard() {
                         <button
                           onClick={() => setShowModal(true)}
                           className="btn btn-primary mb-3 float-right mr-4"
+                          style={{
+                            fontSize: "12px", // General font size
+                            fontFamily: "Arial, sans-serif",
+                          }}
                         >
                           Add Vehicle
                         </button>
@@ -282,7 +316,7 @@ function Ownerdashboard() {
                               marginTop: "50px",
                             }}
                           >
-                            No vehicles found
+                            No vehicles found!
                           </p>
                         </div>
                       ) : (
@@ -290,13 +324,30 @@ function Ownerdashboard() {
                           <div
                             key={vehicle.id || index}
                             className="col-md-6 mb-3"
+                            style={{
+                              fontSize: "12px", // General font size
+                              fontFamily: "Arial, sans-serif",
+                            }}
                           >
-                            <div className="card card-custom">
+                            <div
+                              className="card card-custom"
+                              style={{
+                                borderRadius: "8px",
+                                boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+                                overflow: "hidden",
+                              }}
+                            >
                               <div className="row g-0">
-                                <div className="col-md-4">
+                                <div className="col-md-6">
+                                  {" "}
+                                  {/* 50% width for image */}
                                   <div
                                     className="image-container"
-                                    style={{ height: "262px" }}
+                                    style={{
+                                      height: "100%",
+                                      width: "100%",
+                                      overflow: "hidden",
+                                    }}
                                   >
                                     <img
                                       src={vehicle.imageUrl}
@@ -305,38 +356,123 @@ function Ownerdashboard() {
                                         height: "100%",
                                         width: "100%",
                                         objectFit: "cover",
-                                      }} // Use cover to maintain aspect ratio
+                                      }}
                                       alt={`${vehicle.make} ${vehicle.model}`}
                                     />
                                   </div>
                                 </div>
-                                <div className="col-md-8">
-                                  <div className="card-body d-flex flex-column h-100">
-                                    <h5 className="card-title">
+                                <div
+                                  className="col-md-6"
+                                  style={{
+                                    padding: "15px",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "space-between",
+                                  }}
+                                >
+                                  <div>
+                                    <h5
+                                      className="card-title"
+                                      style={{
+                                        fontSize: "14px",
+                                        fontWeight: "bold",
+                                        marginBottom: "10px",
+                                      }}
+                                    >
                                       {vehicle.make} {vehicle.model}
                                     </h5>
-                                    <p className="card-capacity">
-                                      Capacity: 5 persons
+                                    <p
+                                      style={{
+                                        fontSize: "12px",
+                                        margin: "2.5px 0",
+                                        color: "#555",
+                                      }}
+                                    >
+                                      <strong>Capacity:</strong>{" "}
+                                      <span style={{ fontSize: "10px" }}>
+                                        5 persons
+                                      </span>
                                     </p>
-                                    <p className="card-type">
-                                      Type: {vehicle.type}
+                                    <p
+                                      style={{
+                                        fontSize: "12px",
+                                        margin: "2.5px 0",
+                                        color: "#555",
+                                      }}
+                                    >
+                                      <strong>Type:</strong> {vehicle.type}
                                     </p>
-                                    <p className="card-insurance">
-                                      Insurance Cost: ${vehicle.insurance}
+                                    <p
+                                      style={{
+                                        fontSize: "12px",
+                                        margin: "2.5px 0",
+                                        color: "#555",
+                                      }}
+                                    >
+                                      <strong>Insurance Cost:</strong>{" "}
+                                      <span style={{ fontSize: "10px" }}>
+                                        ${vehicle.insurance}
+                                      </span>
+                                    </p>{" "}
+                                    <p
+                                      style={{
+                                        fontSize: "12px",
+                                        margin: "2.5px 0",
+                                        color: "#555",
+                                      }}
+                                    >
+                                      <strong>ODO Meter Reading:</strong>{" "}
+                                      {vehicle.currentOdoMeter}
                                     </p>
-                                    <p className="card-price">
-                                      Price per day: ${vehicle.dailyPrice}
+                                    <p
+                                      style={{
+                                        fontSize: "12px",
+                                        margin: "2.5px 0",
+                                        color: "#555",
+                                      }}
+                                    >
+                                      <strong>Daily Price (For 1 day):</strong>{" "}
+                                      <span style={{ fontSize: "10px" }}>
+                                        ${vehicle.dailyPrice}
+                                      </span>
                                     </p>
-                                    <div className="mt-auto d-flex justify-content-between">
-                                      <button
-                                        className="btn btn-danger"
-                                        onClick={() =>
-                                          handleDeleteVehicle(vehicle._id)
-                                        }
-                                      >
-                                        Delete
-                                      </button>
-                                    </div>
+                                    <p
+                                      style={{
+                                        fontSize: "12px",
+                                        margin: "2.5px 0",
+                                        color: "#555",
+                                      }}
+                                    >
+                                      <strong>
+                                        Price / day (More than 1 day):
+                                      </strong>{" "}
+                                      <span style={{ fontSize: "10px" }}>
+                                        ${vehicle.pricePerDay}
+                                      </span>
+                                    </p>
+                                  </div>
+                                  <div
+                                    className="text-right"
+                                    style={{
+                                      display: "flex",
+                                      justifyContent: "flex-end",
+                                      marginTop: "auto",
+                                    }}
+                                  >
+                                    <button
+                                      className="btn btn-danger"
+                                      onClick={() =>
+                                        handleDeleteVehicle(vehicle?._id)
+                                      }
+                                      style={{
+                                        fontSize: "10px",
+                                        padding: "5px 10px",
+                                        borderRadius: "4px",
+                                        marginTop: "10px",
+                                      }}
+                                    >
+                                      Delete
+                                    </button>
                                   </div>
                                 </div>
                               </div>
@@ -370,35 +506,92 @@ function Ownerdashboard() {
                             key={rental.id || index}
                             className="col-md-6 mb-3"
                           >
-                            <div className="card card-custom">
+                            <div className="card card-custom position-relative">
                               <div className="row g-0">
-                                <div className="col-md-4">
+                                <div
+                                  className="col-md-4"
+                                  style={{ width: "40%" }}
+                                >
                                   <img
                                     src={rental.imageUrl}
                                     className="img-fluid rounded-start"
-                                    style={{ height: "100% !important" }}
+                                    style={{
+                                      height: "100%",
+                                      objectFit: "cover",
+                                    }}
                                     alt={`${rental.make} ${rental.model}`}
                                   />
                                 </div>
-                                <div className="col-md-8">
+                                <div
+                                  className="col-md-8"
+                                  style={{ width: "60%" }}
+                                >
+                                  {/* Status Badge */}
+                                  <span
+                                    className={`badge position-absolute top-0 end-0 ${
+                                      rental.status === "Cancelled"
+                                        ? "bg-danger"
+                                        : rental.status === "Completed"
+                                        ? "bg-success"
+                                        : "bg-primary"
+                                    }`}
+                                    style={{
+                                      fontSize: "12px",
+                                      color: "#fff",
+                                      padding: "3px 6px",
+                                      borderRadius: "4px",
+                                      margin: "8px",
+                                    }}
+                                  >
+                                    {rental.status}
+                                  </span>
+
                                   <div className="card-body d-flex flex-column">
-                                    <h5 className="card-title">
+                                    <h5
+                                      className="card-title"
+                                      style={{
+                                        fontSize: "12px",
+                                        fontWeight: "bold",
+                                        marginBottom: "5px",
+                                      }}
+                                    >
                                       {rental.make} {rental.model}
                                     </h5>
-                                    <p className="card-capacity">
-                                      Capacity: 5 persons
+                                    <p
+                                      className="card-rental-date"
+                                      style={{
+                                        fontSize: "12px",
+                                        marginBottom: "5px",
+                                      }}
+                                    >
+                                      Rented by : {rental.customerId.name}
                                     </p>
-                                    <p className="card-rental-date">
+                                    <p
+                                      className="card-rental-date"
+                                      style={{
+                                        fontSize: "12px",
+                                        marginBottom: "5px",
+                                      }}
+                                    >
                                       Pickup Date: {rental.pickupDate}
                                     </p>
-                                    <p className="card-return-date">
+                                    <p
+                                      className="card-return-date"
+                                      style={{
+                                        fontSize: "12px",
+                                        marginBottom: "5px",
+                                      }}
+                                    >
                                       Return Date: {rental.returnDate}
                                     </p>
-                                    <p className="card-total-price">
+                                    <p
+                                      className="card-total-price"
+                                      style={{
+                                        fontSize: "12px",
+                                        marginBottom: "5px",
+                                      }}
+                                    >
                                       Total Price: ${rental.totalPrice}
-                                    </p>
-                                    <p className="card-status">
-                                      Status: {rental.status}
                                     </p>
                                   </div>
                                 </div>
@@ -422,10 +615,28 @@ function Ownerdashboard() {
           <div
             className="modal-dialog modal-dialog-centered modal-lg"
             role="document"
+            style={{ maxWidth: "500px" }}
           >
-            <div className="modal-content">
+            <div
+              className="modal-content"
+              style={{
+                padding: "20px",
+                borderRadius: "8px",
+                boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.15)",
+                fontFamily: "Arial, sans-serif",
+              }}
+            >
               <div className="modal-header">
-                <h5 className="modal-title">Add Vehicle</h5>
+                <h5
+                  className="modal-title"
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "bold",
+                    color: "#333",
+                  }}
+                >
+                  Add Vehicle
+                </h5>
                 <button
                   type="button"
                   className="close"
@@ -439,7 +650,18 @@ function Ownerdashboard() {
                 <form onSubmit={handleFormSubmit}>
                   <div className="form-row">
                     <div className="form-group col-md-6">
-                      <label htmlFor="make">Make</label>
+                      <label
+                        htmlFor="make"
+                        style={{
+                          fontSize: "13px",
+                          fontWeight: "bold",
+                          color: "#555",
+                          display: "inline-block",
+                          marginBottom: "5px",
+                        }}
+                      >
+                        Make
+                      </label>
                       <input
                         type="text"
                         className={`form-control ${
@@ -449,7 +671,16 @@ function Ownerdashboard() {
                         name="make"
                         value={newVehicle.make}
                         onChange={handleInputChange}
-                        required />
+                        required
+                        style={{
+                          fontSize: "14px",
+                          padding: "8px",
+                          marginBottom: "10px",
+                          border: "1px solid #ddd",
+                          borderRadius: "4px",
+                          boxSizing: "border-box",
+                        }}
+                      />
                       {formErrors.make && (
                         <div className="invalid-feedback">
                           {formErrors.make}
@@ -457,7 +688,18 @@ function Ownerdashboard() {
                       )}
                     </div>
                     <div className="form-group col-md-6">
-                      <label htmlFor="model">Model</label>
+                      <label
+                        htmlFor="model"
+                        style={{
+                          fontSize: "13px",
+                          fontWeight: "bold",
+                          color: "#555",
+                          display: "inline-block",
+                          marginBottom: "5px",
+                        }}
+                      >
+                        Model
+                      </label>
                       <input
                         type="text"
                         className={`form-control ${
@@ -468,6 +710,14 @@ function Ownerdashboard() {
                         value={newVehicle.model}
                         onChange={handleInputChange}
                         required
+                        style={{
+                          fontSize: "14px",
+                          padding: "8px",
+                          marginBottom: "10px",
+                          border: "1px solid #ddd",
+                          borderRadius: "4px",
+                          boxSizing: "border-box",
+                        }}
                       />
                       {formErrors.model && (
                         <div className="invalid-feedback">
@@ -479,7 +729,18 @@ function Ownerdashboard() {
 
                   <div className="form-row">
                     <div className="form-group col-md-6">
-                      <label htmlFor="capacity">Capacity</label>
+                      <label
+                        htmlFor="capacity"
+                        style={{
+                          fontSize: "13px",
+                          fontWeight: "bold",
+                          color: "#555",
+                          display: "inline-block",
+                          marginBottom: "5px",
+                        }}
+                      >
+                        Capacity
+                      </label>
                       <select
                         className={`form-control ${
                           formErrors.capacity && "is-invalid"
@@ -489,10 +750,16 @@ function Ownerdashboard() {
                         value={newVehicle.capacity}
                         onChange={handleInputChange}
                         required
+                        style={{
+                          fontSize: "14px",
+                          padding: "8px",
+                          marginBottom: "10px",
+                          border: "1px solid #ddd",
+                          borderRadius: "4px",
+                          boxSizing: "border-box",
+                        }}
                       >
                         <option value="5">5</option>
-                        {/* <option value="7">7</option>
-                        <option value="9">9</option> */}
                       </select>
                       {formErrors.capacity && (
                         <div className="invalid-feedback">
@@ -501,7 +768,18 @@ function Ownerdashboard() {
                       )}
                     </div>
                     <div className="form-group col-md-6">
-                      <label htmlFor="type">Type</label>
+                      <label
+                        htmlFor="type"
+                        style={{
+                          fontSize: "13px",
+                          fontWeight: "bold",
+                          color: "#555",
+                          display: "inline-block",
+                          marginBottom: "5px",
+                        }}
+                      >
+                        Type
+                      </label>
                       <select
                         className={`form-control ${
                           formErrors.type && "is-invalid"
@@ -511,6 +789,14 @@ function Ownerdashboard() {
                         value={newVehicle.type}
                         onChange={handleInputChange}
                         required
+                        style={{
+                          fontSize: "14px",
+                          padding: "8px",
+                          marginBottom: "10px",
+                          border: "1px solid #ddd",
+                          borderRadius: "4px",
+                          boxSizing: "border-box",
+                        }}
                       >
                         <option value="">Select Type</option>
                         <option value="car">Car</option>
@@ -526,7 +812,16 @@ function Ownerdashboard() {
 
                   <div className="form-row">
                     <div className="form-group col-md-6">
-                      <label htmlFor="insurance">
+                      <label
+                        htmlFor="insurance"
+                        style={{
+                          fontSize: "13px",
+                          fontWeight: "bold",
+                          color: "#555",
+                          display: "inline-block",
+                          marginBottom: "5px",
+                        }}
+                      >
                         Insurance Cost (per day)
                       </label>
                       <input
@@ -539,6 +834,14 @@ function Ownerdashboard() {
                         value={newVehicle.insurance}
                         onChange={handleInputChange}
                         required
+                        style={{
+                          fontSize: "14px",
+                          padding: "8px",
+                          marginBottom: "10px",
+                          border: "1px solid #ddd",
+                          borderRadius: "4px",
+                          boxSizing: "border-box",
+                        }}
                       />
                       {formErrors.insurance && (
                         <div className="invalid-feedback">
@@ -547,9 +850,20 @@ function Ownerdashboard() {
                       )}
                     </div>
                     <div className="form-group col-md-6">
-                      <label htmlFor="dailyPrice">Daily Price ($)</label>
+                      <label
+                        htmlFor="dailyPrice"
+                        style={{
+                          fontSize: "13px",
+                          fontWeight: "bold",
+                          color: "#555",
+                          display: "inline-block",
+                          marginBottom: "5px",
+                        }}
+                      >
+                        Daily Price ($)
+                      </label>
                       <input
-                        type="text"
+                        type="number"
                         className={`form-control ${
                           formErrors.dailyPrice && "is-invalid"
                         }`}
@@ -558,6 +872,14 @@ function Ownerdashboard() {
                         value={newVehicle.dailyPrice}
                         onChange={handleInputChange}
                         required
+                        style={{
+                          fontSize: "14px",
+                          padding: "8px",
+                          marginBottom: "10px",
+                          border: "1px solid #ddd",
+                          borderRadius: "4px",
+                          boxSizing: "border-box",
+                        }}
                       />
                       {formErrors.dailyPrice && (
                         <div className="invalid-feedback">
@@ -567,10 +889,58 @@ function Ownerdashboard() {
                     </div>
                   </div>
 
-                  {/* New vinNumber and Mileage Fields */}
                   <div className="form-row">
                     <div className="form-group col-md-6">
-                      <label htmlFor="vinNumber">vinNumber Number</label>
+                      <label
+                        htmlFor="pricePerDay"
+                        style={{
+                          fontSize: "13px",
+                          fontWeight: "bold",
+                          color: "#555",
+                          display: "inline-block",
+                          marginBottom: "5px",
+                        }}
+                      >
+                        Price / Mile (More than a day)($)
+                      </label>
+                      <input
+                        type="number"
+                        className={`form-control ${
+                          formErrors.pricePerDay && "is-invalid"
+                        }`}
+                        id="pricePerDay"
+                        name="pricePerDay"
+                        value={newVehicle.pricePerDay}
+                        onChange={handleInputChange}
+                        required
+                        style={{
+                          fontSize: "14px",
+                          padding: "8px",
+                          marginBottom: "10px",
+                          border: "1px solid #ddd",
+                          borderRadius: "4px",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                      {formErrors.pricePerDay && (
+                        <div className="invalid-feedback">
+                          {formErrors.pricePerDay}
+                        </div>
+                      )}
+                    </div>
+                    <div className="form-group col-md-6">
+                      <label
+                        htmlFor="vinNumber"
+                        style={{
+                          fontSize: "13px",
+                          fontWeight: "bold",
+                          color: "#555",
+                          display: "inline-block",
+                          marginBottom: "5px",
+                        }}
+                      >
+                        VIN Number
+                      </label>
                       <input
                         type="text"
                         className={`form-control ${
@@ -581,6 +951,14 @@ function Ownerdashboard() {
                         value={newVehicle.vinNumber}
                         onChange={handleInputChange}
                         required
+                        style={{
+                          fontSize: "14px",
+                          padding: "8px",
+                          marginBottom: "10px",
+                          border: "1px solid #ddd",
+                          borderRadius: "4px",
+                          boxSizing: "border-box",
+                        }}
                       />
                       {formErrors.vinNumber && (
                         <div className="invalid-feedback">
@@ -588,8 +966,22 @@ function Ownerdashboard() {
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  <div className="form-row">
                     <div className="form-group col-md-6">
-                      <label htmlFor="mileage">Mileage (miles/gal)</label>)
+                      <label
+                        htmlFor="mileage"
+                        style={{
+                          fontSize: "13px",
+                          fontWeight: "bold",
+                          color: "#555",
+                          display: "inline-block",
+                          marginBottom: "5px",
+                        }}
+                      >
+                        Mileage (miles/gal)
+                      </label>
                       <input
                         type="number"
                         min={1}
@@ -601,6 +993,14 @@ function Ownerdashboard() {
                         value={newVehicle.mileage}
                         onChange={handleInputChange}
                         required
+                        style={{
+                          fontSize: "14px",
+                          padding: "8px",
+                          marginBottom: "10px",
+                          border: "1px solid #ddd",
+                          borderRadius: "4px",
+                          boxSizing: "border-box",
+                        }}
                       />
                       {formErrors.mileage && (
                         <div className="invalid-feedback">
@@ -608,18 +1008,34 @@ function Ownerdashboard() {
                         </div>
                       )}
                     </div>
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group col-md-12">
-                      <label htmlFor="imageUrl">Upload Image</label>
+                    <div className="form-group col-md-6">
+                      <label
+                        htmlFor="imageUrl"
+                        style={{
+                          fontSize: "13px",
+                          fontWeight: "bold",
+                          color: "#555",
+                          display: "inline-block",
+                          marginBottom: "5px",
+                        }}
+                      >
+                        Upload Image
+                      </label>
                       <input
                         type="file"
                         className={`form-control ${
-                          formErrors.imageUrl && "is-invalid "
+                          formErrors.imageUrl && "is-invalid"
                         }`}
                         id="imageUrl"
                         onChange={handleImageUpload}
+                        style={{
+                          fontSize: "14px",
+                          padding: "8px",
+                          marginBottom: "10px",
+                          border: "1px solid #ddd",
+                          borderRadius: "4px",
+                          boxSizing: "border-box",
+                        }}
                       />
                       {formErrors.imageUrl && (
                         <div className="invalid-feedback">
@@ -629,7 +1045,61 @@ function Ownerdashboard() {
                     </div>
                   </div>
 
-                  <button type="submit" className="btn btn-primary">
+                  <div className="form-row">
+                    <div className="form-group col-md-6">
+                      <label
+                        htmlFor="currentOdoMeter"
+                        style={{
+                          fontSize: "13px",
+                          fontWeight: "bold",
+                          color: "#555",
+                          display: "inline-block",
+                          marginBottom: "5px",
+                        }}
+                      >
+                        Current Odometer (miles)
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        className={`form-control ${
+                          formErrors.currentOdoMeter && "is-invalid"
+                        }`}
+                        id="currentOdoMeter"
+                        name="currentOdoMeter"
+                        value={newVehicle.currentOdoMeter}
+                        onChange={handleInputChange}
+                        required
+                        style={{
+                          fontSize: "14px",
+                          padding: "8px",
+                          marginBottom: "10px",
+                          border: "1px solid #ddd",
+                          borderRadius: "4px",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                      {formErrors.currentOdoMeter && (
+                        <div className="invalid-feedback">
+                          {formErrors.currentOdoMeter}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    style={{
+                      fontSize: "14px",
+                      padding: "8px 12px",
+                      backgroundColor: "#007bff",
+                      border: "none",
+                      borderRadius: "4px",
+                      color: "#fff",
+                      cursor: "pointer",
+                    }}
+                  >
                     Submit
                   </button>
                 </form>
