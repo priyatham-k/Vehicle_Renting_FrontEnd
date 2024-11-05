@@ -32,26 +32,24 @@ function Customerdashboard() {
       }
     }
 
-    const fetchRentals = async () => {
-      try {
-        const userDetails = JSON.parse(sessionStorage.getItem("userDetails"));
-        if (userDetails && userDetails._id) {
-          const apiUrl = `http://localhost:3001/api/customers/rentals/${userDetails._id}`;
-          const rentalsResponse = await axios.get(apiUrl);
-          setRentals(rentalsResponse.data);
-        } else {
-          throw new Error("User ID not found in session storage.");
-        }
-      } catch (err) {
-        setError("Failed to fetch rentals data.");
-        console.error(err);
-      }
-    };
-
     fetchVehicles();
     fetchRentals();
   }, []);
-
+  const fetchRentals = async () => {
+    try {
+      const userDetails = JSON.parse(sessionStorage.getItem("userDetails"));
+      if (userDetails && userDetails._id) {
+        const apiUrl = `http://localhost:3001/api/customers/rentals/${userDetails._id}`;
+        const rentalsResponse = await axios.get(apiUrl);
+        setRentals(rentalsResponse.data);
+      } else {
+        throw new Error("User ID not found in session storage.");
+      }
+    } catch (err) {
+      setError("Failed to fetch rentals data.");
+      console.error(err);
+    }
+  };
   const filteredVehicles =
     selectedFilter === ""
       ? vehicles
@@ -69,7 +67,7 @@ function Customerdashboard() {
         );
         setRentals(rentalsResponse.data);
         alert(
-          "Rental canceled successfully!... Money will be refunded... Except the deposit."
+          "Rental canceled successfully!...Money will be refunded in 4-7 business days."
         );
       } else {
         alert("Failed to cancel rental. Please try again.");
@@ -81,8 +79,10 @@ function Customerdashboard() {
   };
 
   const handleDropOffClick = async (rental) => {
-    const dayDifference = (new Date(rental?.returnDate) - new Date(rental?.pickupDate)) / (1000 * 60 * 60 * 24);
-  
+    const dayDifference =
+      (new Date(rental?.returnDate) - new Date(rental?.pickupDate)) /
+      (1000 * 60 * 60 * 24);
+
     if (dayDifference > 1) {
       setCurrentRental(rental);
       setOdometerDifference("");
@@ -98,13 +98,15 @@ function Customerdashboard() {
         const response = await axios.put(
           `http://localhost:3001/api/customers/rentals/dropoff/${rental._id}`,
           {
-            totalCharge:0,
+            totalCharge: 0,
           }
         );
-          console.log(response)
-        if (response.data.message === "Vehicle drop-off completed successfully") {
+        console.log(response);
+        if (
+          response?.data?.rental?.vehicleId !== null
+        ) {
           alert("Vehicle drop-off completed successfully!");
-          return response.data;
+          fetchRentals();
         } else {
           alert("Vehicle drop-off failed. Please try again.");
         }
@@ -114,7 +116,6 @@ function Customerdashboard() {
       }
     }
   };
-  
 
   const handleDropOffSubmit = async () => {
     if (
@@ -166,9 +167,9 @@ function Customerdashboard() {
         }
       );
 
-      if (response.data.message === "Vehicle drop-off completed successfully") {
+      if (response?.data?.rental?.vehicleId !== null) {
         alert("Vehicle drop-off completed successfully!");
-        return response.data;
+        fetchRentals();
       } else {
         alert("Vehicle drop-off failed. Please try again.");
       }
@@ -332,9 +333,9 @@ function Customerdashboard() {
                       </button>
                     </>
                   )}
-                  {!isRental && vehicle._id && (
+                  {!isRental && vehicle?._id && (
                     <Link
-                      to={`/vehicle/${vehicle._id}`}
+                      to={`/vehicle/${vehicle?._id}`}
                       className="btn btn-primary mt-2"
                       style={{
                         fontSize: "12px",
@@ -453,27 +454,35 @@ function Customerdashboard() {
                   </li>
                   <div className="topbar-divider d-none d-sm-block"></div>
                   <li className="nav-item dropdown no-arrow">
-  <a
-   
-    className="d-flex align-items-center"
-    style={{ textDecoration: "none", color: "grey",marginRight: "10px" }}
-  >
-    <img
-      className="img-profile rounded-circle"
-      src={profileImage}
-      alt="Profile"
-      style={{ width: "30px", height: "30px", marginRight: "8px" }}
-    />
-    <span
-      className="d-none d-lg-inline text-bold-600"
-      style={{ fontSize: "12px" }}
-    >
-      {JSON.parse(sessionStorage.getItem("userDetails"))?.name || ""}<br></br>Role: Customer
-    </span>
-  </a>
-</li>
+                    <a
+                      className="d-flex align-items-center"
+                      style={{
+                        textDecoration: "none",
+                        color: "grey",
+                        marginRight: "10px",
+                      }}
+                    >
+                      <img
+                        className="img-profile rounded-circle"
+                        src={profileImage}
+                        alt="Profile"
+                        style={{
+                          width: "30px",
+                          height: "30px",
+                          marginRight: "8px",
+                        }}
+                      />
+                      <span
+                        className="d-none d-lg-inline text-bold-600"
+                        style={{ fontSize: "12px" }}
+                      >
+                        {JSON.parse(sessionStorage.getItem("userDetails"))
+  ?.email.split("@")[0] || ""}
 
-
+                        <br></br>Role: Customer
+                      </span>
+                    </a>
+                  </li>
                 </ul>
               </nav>
 

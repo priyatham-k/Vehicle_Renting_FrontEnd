@@ -222,7 +222,7 @@ function Ownerdashboard() {
 
           {/* Logout Nav Item */}
           <li className="nav-item">
-            <a className="nav-link" style={{ textDecoration: "none" }}>
+            <a className="nav-link" style={{ textDecoration: "none !important" }}>
               <Link to="/">
                 <span className="text-white">Logout</span>
               </Link>
@@ -240,26 +240,36 @@ function Ownerdashboard() {
                 <i className="fa fa-bars"></i>
               </button>
               <ul className="navbar-nav ml-auto">
-              <li className="nav-item dropdown no-arrow">
-  <a
-   
-    className="d-flex align-items-center"
-    style={{ textDecoration: "none", color: "grey",marginRight: "10px" }}
-  >
-    <img
-      className="img-profile rounded-circle"
-      src={profileImage}
-      alt="Profile"
-      style={{ width: "30px", height: "30px", marginRight: "8px" }}
-    />
-    <span
-      className="d-none d-lg-inline text-bold-600"
-      style={{ fontSize: "12px" }}
-    >
-      {JSON.parse(sessionStorage.getItem("userDetails"))?.name || ""}<br></br>Role: Owner
-    </span>
-  </a>
-</li>
+                <li className="nav-item dropdown no-arrow">
+                  <a
+                    className="d-flex align-items-center"
+                    style={{
+                      textDecoration: "none",
+                      color: "grey",
+                      marginRight: "10px",
+                    }}
+                  >
+                    <img
+                      className="img-profile rounded-circle"
+                      src={profileImage}
+                      alt="Profile"
+                      style={{
+                        width: "30px",
+                        height: "30px",
+                        marginRight: "8px",
+                      }}
+                    />
+                    <span
+                      className="d-none d-lg-inline text-bold-600"
+                      style={{ fontSize: "12px" }}
+                    >
+                      {JSON.parse(sessionStorage.getItem("userDetails"))
+  ?.email.split("@")[0] || ""}
+
+                      <br></br>Role: Owner
+                    </span>
+                  </a>
+                </li>
               </ul>
             </nav>
 
@@ -947,6 +957,7 @@ function Ownerdashboard() {
                           formErrors.vinNumber && "is-invalid"
                         }`}
                         id="vinNumber"
+                        autoComplete="off"
                         name="vinNumber"
                         value={newVehicle.vinNumber}
                         onChange={handleInputChange}

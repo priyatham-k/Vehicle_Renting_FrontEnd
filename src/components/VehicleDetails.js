@@ -1,40 +1,64 @@
-import React, { useState } from "react";
+import React, { Suspense, lazy, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import profileImage from "../assets/undraw_profile_1.svg";
-function VehicleDetails({ vehicles }) {
+
+function VehicleDetails() {
+  const [vehicles, setVehicles] = useState([]);
+  const [vehicle, setVehicle] = useState(null); // Track the specific vehicle
+  const [booking, setBooking] = useState(null); // Initialize booking as null
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
   const { id } = useParams();
-  const vehicle = vehicles.find((v) => v._id === id);
   const navigate = useNavigate();
   const today = new Date().toISOString().split("T")[0];
 
-  const [booking, setBooking] = useState({
-    customerId: JSON.parse(sessionStorage.getItem("userDetails"))?._id || "",
-    vehicleId: vehicle?._id,
-    make: vehicle?.make,
-    model: vehicle?.model,
-    pickupDate: today,
-    returnDate: today,
-    rentalDuration: 1,
-    pickupAddress: "",
-    dropOffAddress: "",
-    deposit: 100,
-    insurance: vehicle?.insurance || 0, // Default to 0 if undefined
-    totalPrice: (vehicle?.dailyPrice || 0) + 100 + (vehicle?.insurance || 0),
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
-    imageUrl: vehicle?.imageUrl,
-    type: vehicle?.type,
-    status: "active",
-    returnDeposit: "yes",
-    pricePerDay: vehicle?.pricePerDay || 0, // Default to 0 if undefined
-    currentOdoMeter:vehicle?.currentOdoMeter
-  });
+  useEffect(() => {
+    async function fetchVehicles() {
+      try {
+        const response = await axios.get("http://localhost:3001/api/customers/vehicles");
+        setVehicles(response.data);
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+        // Find the specific vehicle after loading vehicles
+        const selectedVehicle = response.data.find((v) => v._id === id);
+        if (selectedVehicle) {
+          setVehicle(selectedVehicle);
+          // Initialize the booking state once the vehicle is found
+          setBooking({
+            customerId: JSON.parse(sessionStorage.getItem("userDetails"))?._id || "",
+            vehicleId: selectedVehicle._id,
+            make: selectedVehicle.make,
+            model: selectedVehicle.model,
+            pickupDate: today,
+            returnDate: today,
+            rentalDuration: 1,
+            pickupAddress: "",
+            dropOffAddress: "",
+            deposit: 100,
+            insurance: selectedVehicle.insurance || 0,
+            totalPrice: (selectedVehicle.dailyPrice || 0) + 100 + (selectedVehicle.insurance || 0),
+            cardNumber: "",
+            expiryDate: "",
+            cvv: "",
+            imageUrl: selectedVehicle.imageUrl,
+            type: selectedVehicle.type,
+            status: "active",
+            returnDeposit: "yes",
+            pricePerDay: selectedVehicle.pricePerDay || 0,
+            currentOdoMeter: selectedVehicle.currentOdoMeter,
+          });
+        } else {
+          setError("Vehicle not found");
+        }
+      } catch (error) {
+        console.error("Error fetching vehicles:", error);
+        setError("Failed to fetch vehicles");
+      }
+    }
+    fetchVehicles();
+  }, [id, today]);
 
   if (!vehicle) {
     return <div style={{ fontSize: "12px" }}>Vehicle not found</div>;
@@ -156,7 +180,7 @@ function VehicleDetails({ vehicles }) {
                       <strong>Daily Price (For 1 day):</strong> ${vehicle.dailyPrice || "N/A"}
                     </p>
                     <p className="card-price" style={{ margin: '2.5px 0', color: '#555' }}>
-                      <strong>Price per day (More than 1 day):</strong> ${vehicle.pricePerDay || "N/A"}
+                      <strong>Price per Mile (More than 1 day):</strong> ${vehicle.pricePerDay || "N/A"}
                     </p>
                     <p className="card-price" style={{ margin: '2.5px 0', color: '#555' }}>
                       <strong>ODO Meter :</strong> {vehicle.currentOdoMeter || "N/A"}
