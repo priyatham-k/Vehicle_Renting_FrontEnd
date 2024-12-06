@@ -57,7 +57,7 @@ const OwnerSidebar = ({ activeSection, setActiveSection }) => (
     </li>
 
     {/* Earnings Nav Item */}
-    <li
+    {/* <li
       className={`nav-item ${activeSection === "earnings" ? "active" : ""}`}
       style={{ cursor: "pointer" }}
     >
@@ -71,7 +71,7 @@ const OwnerSidebar = ({ activeSection, setActiveSection }) => (
         ></i>
         <span>Earnings</span>
       </a>
-    </li>
+    </li> */}
     <li
       className={`nav-item ${activeSection === "locations" ? "active" : ""}`}
       onClick={() => setActiveSection("locations")}

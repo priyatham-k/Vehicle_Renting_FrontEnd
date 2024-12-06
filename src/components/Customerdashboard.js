@@ -67,7 +67,7 @@ const CustomerDashboard = () => {
         );
         setRentals(rentalsResponse.data);
         fetchVehicles();
-        alert("Rental canceled successfully!... No Refunds...");
+        alert("Rental canceled successfully!... Amount will be refunded in 4-7 bussines days (Except Deposit, Insurance) ");
       } else {
         alert("Failed to cancel rental. Please try again.");
       }

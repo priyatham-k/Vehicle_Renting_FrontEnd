@@ -9,27 +9,32 @@ const OwnerPayment = () => {
   useEffect(() => {
     const fetchPayments = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:3001/api/payments/owner"
-        );
+        const response = await axios.get("http://localhost:3001/api/payments/owner");
         setPayments(response.data);
         setLoading(false);
       } catch (err) {
-        console.error("Error fetching owner payments:", err);
-        setError("Failed to load payments. Please try again later.");
+        if (err.response && err.response.status === 404) {
+          // If 404, no payments found
+          setPayments([]);
+          setError(null); // Clear any existing error messages
+        } else {
+          console.error("Error fetching owner payments:", err);
+          setError("Failed to load payments. Please try again later.");
+        }
         setLoading(false);
       }
     };
-
+  
     fetchPayments();
   }, []);
+  
 
   if (loading) return <p>Loading payments...</p>;
   if (error) return <p className="text-danger">{error}</p>;
 
   return (
     <div className="container mt-4">
-      <h5 className="mb-4">Owner Payments</h5>
+      <h5 className="mb-4">Payments</h5>
       {payments.length === 0 ? (
         <p>No payments found.</p>
       ) : (

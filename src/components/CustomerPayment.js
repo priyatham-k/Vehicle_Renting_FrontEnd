@@ -14,7 +14,7 @@ const CustomerPayment = () => {
         setLoading(false);
         return;
       }
-
+  
       try {
         const response = await axios.get(
           `http://localhost:3001/api/payments/customer/${userDetails.customer.id}`
@@ -22,14 +22,21 @@ const CustomerPayment = () => {
         setPayments(response.data);
         setLoading(false);
       } catch (err) {
-        console.error("Error fetching payments:", err);
-        setError("Failed to fetch payments.");
+        if (err.response && err.response.status === 404) {
+          // If 404, no payments found
+          setPayments([]);
+          setError(null); // Clear any existing error messages
+        } else {
+          console.error("Error fetching payments:", err);
+          setError("Failed to fetch payments.");
+        }
         setLoading(false);
       }
     };
-
+  
     fetchPayments();
   }, []);
+  
 
   if (loading) return <p>Loading payments...</p>;
   if (error) return <p className="text-danger">{error}</p>;
