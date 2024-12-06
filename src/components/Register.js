@@ -1,48 +1,71 @@
 import React, { useState } from "react";
 import "../App.css";
 import { Link } from "react-router-dom";
-import axios from "axios"; // Import axios for making API requests
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
+
 function Register() {
-  // State for form fields
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [driverLicense, setDriverLicense] = useState("");
+  const [address1, setAddress1] = useState("");
+  const [address2, setAddress2] = useState("");
+  const [state, setState] = useState("");
+  const [zipcode, setZipcode] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState("customer"); // Default role as "customer"
-  const [errorMessage, setErrorMessage] = useState(""); // For displaying error messages
-  const [successMessage, setSuccessMessage] = useState(""); // For displaying success messages
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const navigate = useNavigate();
-  // Form validation
+
   const validateForm = () => {
-    if (!firstName || !lastName || !email || !password || !confirmPassword) {
-      setErrorMessage("Please fill in all fields.");
+    if (
+      !firstName ||
+      !lastName ||
+      !email ||
+      !phone ||
+      !driverLicense ||
+      !address1 ||
+      !state ||
+      !zipcode ||
+      !password ||
+      !confirmPassword
+    ) {
+      setErrorMessage("Please fill in all required fields.");
       return false;
     }
     if (password !== confirmPassword) {
       setErrorMessage("Passwords do not match.");
       return false;
     }
-    setErrorMessage(""); // Clear error if validation passes
+    setErrorMessage("");
     return true;
   };
 
-  // Handle form submission
   const handleRegister = async (e) => {
-    e.preventDefault(); // Prevent form from refreshing the page
-    if (!validateForm()) return; // Stop if form is not valid
+    e.preventDefault();
+    if (!validateForm()) return;
 
-    const fullName = `${firstName} ${lastName}`;
     const payload = {
-      name: fullName,
+      firstName,
+      lastName,
       email,
+      phone,
+      driverLicense,
+      address1,
+      address2,
+      state,
+      zipcode,
       password,
-      role,
     };
 
     try {
-      const response = await axios.post("http://localhost:3001/api/auth/register", payload);
+      const response = await axios.post(
+        "http://localhost:3001/api/customers/register",
+        payload
+      );
       if (response.status === 201) {
         setSuccessMessage("Registration successful! Please log in.");
         setErrorMessage("");
@@ -55,8 +78,25 @@ function Register() {
     }
   };
 
+  const inputStyle = {
+    fontSize: "12px",
+    borderRadius: "0px",
+    height: "30px",
+    padding: "2px 5px",
+  };
+
+  const buttonStyle = {
+    fontSize: "12px",
+    padding: "2px 10px",
+    height: "25px",
+  };
+
+  const textStyle = {
+    fontSize: "12px",
+  };
+
   return (
-    <div className="bg-gradient-primary appStyle">
+    <div className="bg-gradient-primary appStyle" style={{ fontSize: "12px" }}>
       <div className="container p-1">
         <div className="card o-hidden border-0 shadow-lg my-5">
           <div className="card-body p-0">
@@ -65,20 +105,29 @@ function Register() {
               <div className="col-lg-7">
                 <div className="p-5">
                   <div className="text-center">
-                    <h1 className="h4 text-gray-900 mb-4">Create an Account!</h1>
+                    <h1 className="h4 text-gray-900 mb-4" style={textStyle}>
+                      Create an Account!
+                    </h1>
                   </div>
 
-                  {/* Error and Success Messages */}
-                  {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
-                  {successMessage && <div className="alert alert-success">{successMessage}</div>}
+                  {errorMessage && (
+                    <div className="alert alert-danger" style={textStyle}>
+                      {errorMessage}
+                    </div>
+                  )}
+                  {successMessage && (
+                    <div className="alert alert-success" style={textStyle}>
+                      {successMessage}
+                    </div>
+                  )}
 
                   <form className="user" onSubmit={handleRegister}>
                     <div className="form-group row">
                       <div className="col-sm-6 mb-3 mb-sm-0">
                         <input
                           type="text"
-                          className="form-control form-control-user"
-                          id="exampleFirstName"
+                          className="form-control"
+                          style={inputStyle}
                           placeholder="First Name"
                           value={firstName}
                           onChange={(e) => setFirstName(e.target.value)}
@@ -87,8 +136,8 @@ function Register() {
                       <div className="col-sm-6">
                         <input
                           type="text"
-                          className="form-control form-control-user"
-                          id="exampleLastName"
+                          className="form-control"
+                          style={inputStyle}
                           placeholder="Last Name"
                           value={lastName}
                           onChange={(e) => setLastName(e.target.value)}
@@ -98,19 +147,81 @@ function Register() {
                     <div className="form-group">
                       <input
                         type="email"
-                        className="form-control form-control-user"
-                        id="exampleInputEmail"
+                        className="form-control"
+                        style={inputStyle}
                         placeholder="Email Address"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                       />
                     </div>
+                    <div className="form-group">
+                      <input
+                        type="text"
+                        className="form-control"
+                        style={inputStyle}
+                        placeholder="Phone Number"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <input
+                        type="text"
+                        className="form-control"
+                        style={inputStyle}
+                        placeholder="Driver License Number"
+                        value={driverLicense}
+                        onChange={(e) => setDriverLicense(e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <input
+                        type="text"
+                        className="form-control"
+                        style={inputStyle}
+                        placeholder="Address Line 1"
+                        value={address1}
+                        onChange={(e) => setAddress1(e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <input
+                        type="text"
+                        className="form-control"
+                        style={inputStyle}
+                        placeholder="Address Line 2 (Optional)"
+                        value={address2}
+                        onChange={(e) => setAddress2(e.target.value)}
+                      />
+                    </div>
+                    <div className="form-group row">
+                      <div className="col-sm-6 mb-3 mb-sm-0">
+                        <input
+                          type="text"
+                          className="form-control"
+                          style={inputStyle}
+                          placeholder="State"
+                          value={state}
+                          onChange={(e) => setState(e.target.value)}
+                        />
+                      </div>
+                      <div className="col-sm-6">
+                        <input
+                          type="text"
+                          className="form-control"
+                          style={inputStyle}
+                          placeholder="Zipcode"
+                          value={zipcode}
+                          onChange={(e) => setZipcode(e.target.value)}
+                        />
+                      </div>
+                    </div>
                     <div className="form-group row">
                       <div className="col-sm-6 mb-3 mb-sm-0">
                         <input
                           type="password"
-                          className="form-control form-control-user"
-                          id="exampleInputPassword"
+                          className="form-control"
+                          style={inputStyle}
                           placeholder="Password"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
@@ -119,8 +230,8 @@ function Register() {
                       <div className="col-sm-6">
                         <input
                           type="password"
-                          className="form-control form-control-user"
-                          id="exampleRepeatPassword"
+                          className="form-control"
+                          style={inputStyle}
                           placeholder="Repeat Password"
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
@@ -128,32 +239,18 @@ function Register() {
                       </div>
                     </div>
 
-                    {/* Role Selection */}
-                    <div className="form-group">
-                      {/* Add a label for accessibility */}
-                      <select
-                        className="form-control"
-                        id="roleSelect" // Add an ID to associate with the label
-                        value={role}
-                        onChange={(e) => {
-                          console.log(`Selected role: ${e.target.value}`); // Log the selected role
-                          setRole(e.target.value); // Update the role in state
-                        }}
-                      >
-                        <option value="customer">Customer</option>
-                        {/* If you want to add more roles, you can uncomment and add options here */}
-                        {/* <option value="owner">Owner</option> */}
-                      </select>
-                    </div>
-
-                    <button type="submit" className="btn btn-primary btn-user btn-block">
+                    <button
+                      type="submit"
+                      className="btn btn-primary btn-block"
+                      style={buttonStyle}
+                    >
                       Register Account
                     </button>
                   </form>
 
                   <hr />
                   <div className="text-center">
-                    <Link to="/" className="small">
+                    <Link to="/" className="small" style={textStyle}>
                       Already have an account? Login!
                     </Link>
                   </div>

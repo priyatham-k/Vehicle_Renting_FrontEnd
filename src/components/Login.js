@@ -5,7 +5,7 @@ import "../App.css";
 import { Link } from "react-router-dom";
 
 function Login() {
-  const [email, setemail] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -13,52 +13,71 @@ function Login() {
   const handleLogin = async (e, userType) => {
     e.preventDefault();
     setError(null);
-    let loginUrl;
-    if (userType === "customer") {
-      loginUrl = "http://localhost:3001/api/auth/login";
-    } else if (userType === "owner") {
-      loginUrl = "http://localhost:3001/api/owners/login";
+
+    const apiUrls = {
+      customer: "http://localhost:3001/api/customers/login",
+      owner: "http://localhost:3001/api/admin/login",
+    };
+
+    const loginUrl = apiUrls[userType];
+    if (!loginUrl) {
+      setError("Invalid user type. Please select a valid role.");
+      return;
     }
+
     try {
       const response = await axios.post(loginUrl, { email, password });
-      if (response.data.user) {
-        const userDetails = response.data.user;
+
+      if (response.status === 200) {
+        const userDetails = response.data;
+
+        // Store user details in session storage
         sessionStorage.setItem("userDetails", JSON.stringify(userDetails));
 
-        if (userDetails.role === "customer" && userType === "customer") {
-          navigate("/Customerdashboard");
-        } else if (userDetails.role === "owner" && userType === "owner") {
-          navigate("/Ownerdashboard");
+        // Navigate based on user role
+        if (userType === "customer") {
+          navigate("/customerdashboard");
+        } else if (userType === "owner") {
+          navigate("/ownerdashboard");
         } else {
-          setError("Please check your credentials.");
+          setError("Invalid role detected. Please try again.");
         }
       } else {
-        setError("Login failed. User details not found.");
+        setError("Login failed. Please check your credentials.");
       }
     } catch (err) {
+      console.error("Login error:", err);
       setError("Failed to login. Please check your credentials.");
     }
   };
 
   return (
-    <div className="bg-gradient-primary appStyle d-flex justify-content-center align-items-center" style={{ height: "100vh" }}>
+    <div
+      className="bg-gradient-primary appStyle d-flex justify-content-center align-items-center"
+      style={{ height: "100vh" }}
+    >
       <div className="card o-hidden border-0 shadow-lg login-container">
         <div className="row no-gutters">
           {/* Left Side with Background Image */}
           <div className="col-lg-6 d-none d-lg-block bg-login-image"></div>
-          
+
           {/* Right Side Login Form */}
           <div className="col-lg-6 d-flex align-items-center justify-content-center">
             <div className="card-body p-4">
-              <h2 className="shiny-title text-center mb-3">VEHICLE RENTING PLATFORM</h2>
-              <h4 className="text-gray-900 text-center mb-3 small-title">Welcome!</h4>
-              <form onSubmit={handleLogin}>
+              <h2 className="shiny-title text-center mb-3">
+                VEHICLE RENTING PLATFORM
+              </h2>
+              <h4 className="text-gray-900 text-center mb-3 small-title">
+                Welcome!
+              </h4>
+              <form>
                 <div className="form-group">
                   <input
                     type="text"
                     className="form-control form-control-user small-input"
                     placeholder="Enter Email Address..."
-                    onChange={(e) => setemail(e.target.value)}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
                 <div className="form-group">
@@ -66,20 +85,31 @@ function Login() {
                     type="password"
                     className="form-control form-control-user small-input"
                     placeholder="Password"
+                    value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
                 </div>
-                {error && <p className="text-danger text-center small-text">{error}</p>}
-                <button className="btn btn-primary btn-user btn-block small-btn" onClick={(e) => handleLogin(e, "customer")}>
+                {error && (
+                  <p className="text-danger text-center small-text">{error}</p>
+                )}
+                <button
+                  className="btn btn-primary btn-user btn-block small-btn"
+                  onClick={(e) => handleLogin(e, "customer")}
+                >
                   Customer Login
                 </button>
-                <button className="btn btn-danger btn-user btn-block small-btn" onClick={(e) => handleLogin(e, "owner")}>
-                  Owner Login
+                <button
+                  className="btn btn-danger btn-user btn-block small-btn"
+                  onClick={(e) => handleLogin(e, "owner")}
+                >
+                  Admin Login
                 </button>
               </form>
               <hr />
               <div className="text-center">
-                <Link to="/Register" className="small-link">Create Customer Account!</Link>
+                <Link to="/Register" className="small-link">
+                  Create Customer Account!
+                </Link>
               </div>
             </div>
           </div>
@@ -88,7 +118,7 @@ function Login() {
 
       <style jsx>{`
         .login-container {
-          max-width: 700px; /* Increased width */
+          max-width: 700px;
           width: 100%;
           border-radius: 10px;
           overflow: hidden;
@@ -96,34 +126,44 @@ function Login() {
 
         .small-input {
           font-size: 12px;
-          padding: 6px;
+          padding: 5px;
+          height: 30px;
         }
+
         .small-btn {
           font-size: 12px;
-          padding: 5px 0;
+          padding: 5px;
           margin-bottom: 10px;
         }
+
         .small-text {
           font-size: 12px;
         }
+
         .small-link {
           font-size: 12px;
         }
+
         .small-title {
           font-size: 16px;
           font-weight: 500;
         }
+
         .shiny-title {
           font-size: 18px;
-          text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.5);
+          text-shadow: 0 0 10px rgba(255, 255, 255, 0.8),
+            0 0 20px rgba(255, 255, 255, 0.5);
           animation: glow 1.5s infinite alternate;
         }
+
         @keyframes glow {
           from {
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5), 0 0 10px rgba(255, 255, 255, 0.3);
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5),
+              0 0 10px rgba(255, 255, 255, 0.3);
           }
           to {
-            text-shadow: 0 0 15px rgba(255, 255, 255, 1), 0 0 30px rgba(255, 255, 255, 0.7);
+            text-shadow: 0 0 15px rgba(255, 255, 255, 1),
+              0 0 30px rgba(255, 255, 255, 0.7);
           }
         }
       `}</style>

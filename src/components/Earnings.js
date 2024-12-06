@@ -14,7 +14,7 @@ const Earnings = () => {
     const fetchEarnings = async () => {
       setLoading(true);
       try {
-        const response = await axios.get("http://localhost:3001/api/owners/rentals");
+        const response = await axios.get("http://localhost:3001/api/rentals/owner");
         const rentals = response.data;
 
         // Calculate total earnings, canceled, and completed rentals
@@ -25,10 +25,10 @@ const Earnings = () => {
         rentals.forEach((rental) => {
           if (rental.status === "Cancelled") {
             canceled += 1;
-            total += 100; // Add 100 for each canceled rental as per your requirement
+            total += 100 + parseFloat(rental.insurance) * (rental.rentalDuration)
           } else if (rental.status === "Completed") {
             completed += 1;
-            total += rental.totalPrice; // Assuming `totalPrice` is the earnings for each completed rental
+            total += rental.totalPrice; // Total earnings for completed rentals
           }
         });
 
@@ -50,7 +50,7 @@ const Earnings = () => {
   if (error) return <p>{error}</p>;
 
   return (
-    <div className="container mt-4">
+    <div className="container mt-3" style={{ fontSize: "12px" }}>
       <h5 className="mb-4">Earnings Overview</h5>
 
       {/* Summary Cards */}
@@ -58,7 +58,7 @@ const Earnings = () => {
         <div className="col-md-4">
           <div className="summary-card" style={styles.card}>
             <FaDollarSign style={styles.icon} />
-            <h5>Total Earnings</h5>
+            <h5>Final Earnings</h5>
             <p style={styles.totalEarnings}>${totalEarnings.toFixed(2)}</p>
           </div>
         </div>
@@ -78,19 +78,45 @@ const Earnings = () => {
         </div>
       </div>
 
-      {/* Recent Earnings List */}
+      {/* Recent Earnings Table */}
       <div className="earnings-list mt-4">
         <h5>Recent Earnings</h5>
-        <ul className="list-group">
-          {earningsData.map((rental, index) => (
-            <li key={index} className="list-group-item d-flex justify-content-between align-items-center">
-              <span>
-                <strong>{rental.pickupDate}</strong> - {rental.status}
-              </span>
-              <span>${rental.status === "Cancelled" ? 100 : rental.totalPrice}</span>
-            </li>
-          ))}
-        </ul>
+        <table className="table table-striped table-bordered" style={styles.table}>
+          <thead>
+            <tr>
+              <th style={styles.tableHeader}>Image</th>
+              <th style={styles.tableHeader}>Rented By</th>
+              <th style={styles.tableHeader}>Pickup Date</th>
+              <th style={styles.tableHeader}>Dropoff Date</th>
+              <th style={styles.tableHeader}>Pickup Address</th>
+              <th style={styles.tableHeader}>Dropoff Address</th>
+              <th style={styles.tableHeader}>Status</th>
+              <th style={styles.tableHeader}>Earnings</th>
+            </tr>
+          </thead>
+          <tbody>
+            {earningsData.map((rental, index) => (
+              <tr key={index}>
+                <td>
+                  <img
+                    src={rental.vehicleId?.imageUrl || ""}
+                    alt="Vehicle"
+                    style={{ width: "50px", height: "50px", objectFit: "cover" }}
+                  />
+                </td>
+                <td>{rental.customerId?.firstName || "N/A"} {rental.customerId?.lastName || ""}</td>
+                <td>{rental.pickupDate || "N/A"}</td>
+                <td>{rental.returnDate || "N/A"}</td>
+                <td>{rental.pickupAddress || "N/A"}</td>
+                <td>{rental.dropOffAddress || "N/A"}</td>
+                <td>{rental.status}</td>
+                <td>
+                  ${rental.totalPrice.toFixed(2)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
@@ -98,32 +124,42 @@ const Earnings = () => {
 
 const styles = {
   card: {
-    padding: "20px",
+    padding: "10px",
     backgroundColor: "#f8f9fc",
     borderRadius: "8px",
-    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
     textAlign: "center",
-    marginBottom: "20px",
+    marginBottom: "15px",
   },
   icon: {
-    fontSize: "30px",
+    fontSize: "20px",
     color: "#4e73df",
-    marginBottom: "10px",
+    marginBottom: "5px",
   },
   totalEarnings: {
-    fontSize: "24px",
+    fontSize: "18px",
     color: "#28a745",
     fontWeight: "bold",
   },
   canceled: {
-    fontSize: "24px",
+    fontSize: "18px",
     color: "#dc3545",
     fontWeight: "bold",
   },
   completed: {
-    fontSize: "24px",
+    fontSize: "18px",
     color: "#17a2b8",
     fontWeight: "bold",
+  },
+  table: {
+    fontSize: "12px",
+    border: "1px solid #dee2e6",
+  },
+  tableHeader: {
+    fontSize: "12px",
+    fontWeight: "bold",
+    textAlign: "center",
+    backgroundColor: "#f8f9fc",
   },
 };
 

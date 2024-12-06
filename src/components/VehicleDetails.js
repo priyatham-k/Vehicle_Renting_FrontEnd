@@ -1,13 +1,12 @@
-import React, { Suspense, lazy, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import profileImage from "../assets/undraw_profile_1.svg";
 
 function VehicleDetails() {
   const [vehicles, setVehicles] = useState([]);
-  const [vehicle, setVehicle] = useState(null); // Track the specific vehicle
-  const [booking, setBooking] = useState(null); // Initialize booking as null
+  const [vehicle, setVehicle] = useState(null);
+  const [booking, setBooking] = useState(null);
+  const [locations, setLocations] = useState([]); // State for locations
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -18,16 +17,15 @@ function VehicleDetails() {
   useEffect(() => {
     async function fetchVehicles() {
       try {
-        const response = await axios.get("http://localhost:3001/api/customers/vehicles");
+        const response = await axios.get("http://localhost:3001/api/vehicles/");
         setVehicles(response.data);
 
-        // Find the specific vehicle after loading vehicles
         const selectedVehicle = response.data.find((v) => v._id === id);
+        const userDetails = JSON.parse(sessionStorage.getItem("userDetails"));
         if (selectedVehicle) {
           setVehicle(selectedVehicle);
-          // Initialize the booking state once the vehicle is found
           setBooking({
-            customerId: JSON.parse(sessionStorage.getItem("userDetails"))?._id || "",
+            customerId: userDetails?.customer?.id || "",
             vehicleId: selectedVehicle._id,
             make: selectedVehicle.make,
             model: selectedVehicle.model,
@@ -57,12 +55,20 @@ function VehicleDetails() {
         setError("Failed to fetch vehicles");
       }
     }
-    fetchVehicles();
-  }, [id, today]);
 
-  if (!vehicle) {
-    return <div style={{ fontSize: "12px" }}>Vehicle not found</div>;
-  }
+    async function fetchLocations() {
+      try {
+        const response = await axios.get("http://localhost:3001/api/locations");
+        setLocations(response.data);
+      } catch (error) {
+        console.error("Error fetching locations:", error);
+        setError("Failed to fetch locations");
+      }
+    }
+
+    fetchVehicles();
+    fetchLocations();
+  }, [id, today]);
 
   const calculateRentalDuration = (pickupDate, returnDate) => {
     const pickup = new Date(pickupDate);
@@ -77,9 +83,8 @@ function VehicleDetails() {
     const insurance = booking.insurance || 0;
     const deposit = booking.deposit || 0;
 
-    // If rental duration is more than 1 day, only include insurance and deposit
     if (rentalDuration > 1) {
-      return deposit + insurance + locationFee;
+      return deposit + (insurance * rentalDuration) + locationFee;
     } else {
       const basePrice = vehicle?.dailyPrice || 0;
       return basePrice + deposit + insurance + locationFee;
@@ -136,7 +141,7 @@ function VehicleDetails() {
     }
 
     try {
-      await axios.post("http://localhost:3001/api/customers/rent", booking, {
+      await axios.post("http://localhost:3001/api/rentals/rent", booking, {
         headers: {
           "Content-Type": "application/json",
         },
@@ -151,6 +156,10 @@ function VehicleDetails() {
       setLoading(false);
     }
   };
+
+  if (!vehicle) {
+    return <div style={{ fontSize: "12px" }}>Vehicle not found</div>;
+  }
 
   return (
     <div className="vehicle-details container mt-3" style={{ fontSize: "12px" }}>
@@ -169,22 +178,11 @@ function VehicleDetails() {
                 <h5 className="card-title">
                   {vehicle.make} {vehicle.model}
                 </h5>
-                <p className="card-capacity" style={{ margin: '2.5px 0', color: '#555' }}>
-                      <strong>Capacity:</strong> {vehicle?.capacity || "5"} people
-                    </p>
-                    
-                    <p className="card-insurance" style={{ margin: '2.5px 0', color: '#555' }}>
-                      <strong>Insurance:</strong> ${vehicle.insurance || "N/A"}
-                    </p>
-                    <p className="card-price" style={{ margin: '2.5px 0', color: '#555' }}>
-                      <strong>Daily Price (For 1 day):</strong> ${vehicle.dailyPrice || "N/A"}
-                    </p>
-                    <p className="card-price" style={{ margin: '2.5px 0', color: '#555' }}>
-                      <strong>Price per Mile (More than 1 day):</strong> ${vehicle.pricePerDay || "N/A"}
-                    </p>
-                    <p className="card-price" style={{ margin: '2.5px 0', color: '#555' }}>
-                      <strong>ODO Meter :</strong> {vehicle.currentOdoMeter || "N/A"}
-                    </p>
+                <p><strong>Capacity:</strong> {vehicle.capacity || "5"} people</p>
+                <p><strong>Insurance:</strong> ${vehicle.insurance || "N/A"}</p>
+                <p><strong>Daily Price:</strong> ${vehicle.dailyPrice || "N/A"}</p>
+                <p><strong>Price per Mile:</strong> ${vehicle.pricePerDay || "N/A"}</p>
+                <p><strong>ODO Meter:</strong> {vehicle.currentOdoMeter || "N/A"}</p>
               </div>
             </div>
           </div>
@@ -222,8 +220,7 @@ function VehicleDetails() {
               </div>
               <div className="form-group col-12 col-md-6">
                 <label htmlFor="pickupAddress">Pickup location</label>
-                <input
-                  type="text"
+                <select
                   id="pickupAddress"
                   name="pickupAddress"
                   value={booking.pickupAddress}
@@ -231,12 +228,20 @@ function VehicleDetails() {
                   className="form-control"
                   style={{ fontSize: "12px", padding: "6px", height: "32px" }}
                   required
-                />
+                >
+                  <option value="">Select Pickup Location</option>
+                  {locations.map((location) => (
+                    <option key={location._id} value={location.name}>
+                      {location.name} {"("+location.address+")"}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="form-group col-12 col-md-6">
-                <label htmlFor="dropOffAddress">Drop location ($100 fee, If pickup and drop address aren't the same.)</label>
-                <input
-                  type="text"
+                <label htmlFor="dropOffAddress">
+                  Drop location ($100 fee if different from pickup)
+                </label>
+                <select
                   id="dropOffAddress"
                   name="dropOffAddress"
                   value={booking.dropOffAddress}
@@ -244,7 +249,14 @@ function VehicleDetails() {
                   className="form-control"
                   style={{ fontSize: "12px", padding: "6px", height: "32px" }}
                   required
-                />
+                >
+                  <option value="">Select Drop Location</option>
+                  {locations.map((location) => (
+                    <option key={location._id} value={location.name}>
+                      {location.name} {"("+location.address+")"}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 

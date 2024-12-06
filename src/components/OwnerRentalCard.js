@@ -8,13 +8,10 @@ const calculateDaysRented = (pickupDate, returnDate) => {
 };
 
 const OwnerRentalCard = ({ rental }) => {
+  console.log(rental);
   // Extract the customer's name from the email (prefix before @)
-  const rentedBy = rental.customerId?.email.split("@")[0] || "Unknown";
+  const rentedBy = rental.customerId?.firstName || "Unknown";
 
-  // Calculate the days rented
-  const daysRented = calculateDaysRented(rental.pickupDate, rental.returnDate);
-
-  // Log rental details
   useEffect(() => {
     console.log("Rental Details:", rental);
   }, [rental]);
@@ -114,7 +111,7 @@ const OwnerRentalCard = ({ rental }) => {
                   color: "#555",
                 }}
               >
-                <strong>Days Rented:</strong> {daysRented} days
+                <strong>Days Rented:</strong> {rental.rentalDuration} days
               </p>
             </div>
           </div>
