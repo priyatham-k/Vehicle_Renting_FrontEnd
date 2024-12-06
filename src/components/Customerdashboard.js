@@ -48,10 +48,55 @@ const CustomerDashboard = () => {
       console.error("Error fetching vehicles:", error);
     }
   };
-  const handleDropOffClick = (rental) => {
-    setCurrentRental(rental);
-    setShowDropOffModal(true);
+  // const handleDropOffClick = (rental) => {
+  //   console.log(rental)
+  //   setCurrentRental(rental);
+  //   setShowDropOffModal(true);
+  // };
+
+
+
+  const handleDropOffClick = async (rental) => {
+    if (rental.rentalDuration > 1) {
+      setCurrentRental(rental);
+      setOdometerDifference("");
+      setDropOffOdometer("");
+      setShowDropOffModal(true);
+      setCreditCard({
+        number: "",
+        expiry: "",
+        cvv: "",
+      });
+    } else {
+      try {
+        const response = await axios.put(
+          `http://localhost:3001/api/rentals/dropoff/${rental._id}`,
+          {
+            totalCharge: rental?.totalPrice,
+            newOdometer: rental?.vehicleId?.currentOdoMeter,
+          }
+        );
+        console.log(response);
+        if (
+          response?.data?.rental?.vehicleId !== null
+        ) {
+          alert("Vehicle drop-off completed successfully!");
+          fetchRentals();
+        } else {
+          alert("Vehicle drop-off failed. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error in vehicle drop-off:", error);
+        alert("Vehicle drop-off failed. Please try again.");
+      }
+    }
   };
+
+
+
+
+
+
   const lastedrentals = () => {
     fetchRentals();
   };
