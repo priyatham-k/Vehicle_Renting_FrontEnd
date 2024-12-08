@@ -30,7 +30,6 @@ const CustomerDashboard = () => {
       );
       setRentals(response.data);
     } catch (error) {
-      console.error("Error fetching rentals:", error);
     }
   };
   useEffect(() => {
@@ -40,16 +39,14 @@ const CustomerDashboard = () => {
   const fetchVehicles = async () => {
     try {
       const response = await axios.get("http://localhost:3001/api/vehicles/");
-      const availableVehicles = response.data.filter(
-        (vehicle) => vehicle.status === "available"
-      );
-      setVehicles(availableVehicles);
+      // const availableVehicles = response.data.filter(
+      //   (vehicle) => vehicle.status === "available"
+      // );
+      setVehicles(response.data);
     } catch (error) {
-      console.error("Error fetching vehicles:", error);
     }
   };
   // const handleDropOffClick = (rental) => {
-  //   console.log(rental)
   //   setCurrentRental(rental);
   //   setShowDropOffModal(true);
   // };
@@ -76,7 +73,6 @@ const CustomerDashboard = () => {
             newOdometer: rental?.vehicleId?.currentOdoMeter,
           }
         );
-        console.log(response);
         if (
           response?.data?.rental?.vehicleId !== null
         ) {
@@ -86,7 +82,6 @@ const CustomerDashboard = () => {
           alert("Vehicle drop-off failed. Please try again.");
         }
       } catch (error) {
-        console.error("Error in vehicle drop-off:", error);
         alert("Vehicle drop-off failed. Please try again.");
       }
     }
@@ -117,7 +112,6 @@ const CustomerDashboard = () => {
         alert("Failed to cancel rental. Please try again.");
       }
     } catch (error) {
-      console.error("Error canceling rental:", error);
       alert("Failed to cancel rental. Please try again.");
     }
   };
@@ -188,7 +182,6 @@ const CustomerDashboard = () => {
           alert("Vehicle drop-off failed. Please try again.");
         }
       } catch (error) {
-        console.error("Error in vehicle drop-off:", error);
         alert("Vehicle drop-off failed. Please try again.");
       }
     } else {
@@ -230,7 +223,6 @@ const CustomerDashboard = () => {
           alert("Vehicle drop-off failed. Please try again.");
         }
       } catch (error) {
-        console.error("Error in vehicle drop-off:", error);
         alert("Vehicle drop-off failed. Please try again.");
       }
     }
@@ -266,7 +258,7 @@ const CustomerDashboard = () => {
             )}
             {activeSection === "vehicles" &&
               vehicles.map((vehicle) => (
-                <VehicleCard key={vehicle._id} vehicle={vehicle} />
+                <VehicleCard key={vehicle._id} vehicle={vehicle}  isRental={false}/>
               ))}
               {activeSection === "payments" &&
               
@@ -277,7 +269,7 @@ const CustomerDashboard = () => {
                 <VehicleCard
                   key={rental._id}
                   vehicle={rental}
-                  isRental
+                  isRental={true}
                   onDropOff={handleDropOffClick}
                   reviewAdded={lastedrentals}
                   onCancelRental={handleCancelRental}

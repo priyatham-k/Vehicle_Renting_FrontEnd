@@ -1,7 +1,7 @@
 import React from "react";
 import OwnerRentalCard from "./OwnerRentalCard";
 
-const OwnerRentalsSection = ({ rentals, error }) => (
+const OwnerRentalsSection = ({ rentals,vehicles, error }) => (
   <div className="container-fluid">
     <div className="row">
       {error ? (
@@ -9,7 +9,7 @@ const OwnerRentalsSection = ({ rentals, error }) => (
       ) : rentals.length === 0 ? (
         <p style={{ textAlign: "center", fontSize: "20px", marginTop: "50px" }}>No rentals found</p>
       ) : (
-        rentals.map((rental) => <OwnerRentalCard key={rental.id} rental={rental} />)
+        rentals.map((rental) => <OwnerRentalCard key={rental.id} rental={rental} vehicles={vehicles} />)
       )}
     </div>
   </div>

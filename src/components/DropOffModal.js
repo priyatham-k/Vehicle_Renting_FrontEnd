@@ -13,7 +13,7 @@ const DropOffModal = ({
   handleCreditCardChange,
   odometerDifference,
 }) => {
-  if (!isOpen || !rental) return null;
+  if (!isOpen) return null;
 
   return (
     <div className="modal-overlay">
@@ -33,11 +33,20 @@ const DropOffModal = ({
               placeholder="Enter odometer reading"
             />
           </label>
-          <button className="calculate-button" onClick={onCalculate}>
-            Calculate Total
-          </button>
 
-          {odometerDifference > 0 && (
+          {rental.rentalDuration > 1 ? (
+            <button className="calculate-button" onClick={onCalculate}>
+              Calculate Total
+            </button>
+          ) : (
+            <button
+              className="pay-button"
+              onClick={() => onPaymentSubmit(rental)}
+            >
+              Drop Off
+            </button>
+          )}
+          {odometerDifference > 0 && rental.rentalDuration > 1 && (
             <div className="summary-section">
               <p className="total-charge">
                 <strong>Odometer Difference:</strong> {odometerDifference} miles
@@ -48,53 +57,20 @@ const DropOffModal = ({
             </div>
           )}
 
-          {totalCharge > 0 && (
+          {totalCharge > 0 && rental?.rentalDuration > 1 && (
             <div className="payment-section">
-              <h5>Enter Payment Details</h5>
-              <div className="credit-card-fields">
-                <div className="row">
-                  <label className="modal-label half-width">
-                    Card Number:
-                    <input
-                      type="text"
-                      name="number"
-                      maxLength="16"
-                      value={creditCard.number}
-                      onChange={handleCreditCardChange}
-                      className="modal-input"
-                      placeholder="1234 5678 9012 3456"
-                    />
-                  </label>
-                  <label className="modal-label half-width">
-                    Expiry (MM/YY):
-                    <input
-                      type="text"
-                      name="expiry"
-                      maxLength="5"
-                      value={creditCard.expiry}
-                      onChange={handleCreditCardChange}
-                      className="modal-input"
-                      placeholder="MM/YY"
-                    />
-                  </label>
-                </div>
-                <div className="row">
-                  <label className="modal-label full-width">
-                    CVV:
-                    <input
-                      type="text"
-                      name="cvv"
-                      maxLength="3"
-                      value={creditCard.cvv}
-                      onChange={handleCreditCardChange}
-                      className="modal-input small-input"
-                      placeholder="123"
-                    />
-                  </label>
-                </div>
-              </div>
-              <button className="pay-button" onClick={() => onPaymentSubmit(rental)}>
-                Pay Now
+              {rental?.rentalDuration > 1 && (
+                <p>
+                  Money will be debited from the card ending:{" "}
+                  <strong>{rental?.cardLastFour}</strong>
+                </p>
+              )}
+
+              <button
+                className="pay-button"
+                onClick={() => onPaymentSubmit(rental)}
+              >
+                Submit Drop Off
               </button>
             </div>
           )}

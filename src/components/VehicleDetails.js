@@ -9,10 +9,18 @@ function VehicleDetails() {
   const [locations, setLocations] = useState([]); // State for locations
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
+  const [rentalDates, setRentalDates] = useState([]);
+  const [disabledDates, setDisabledDates] = useState([]);
   const { id } = useParams();
   const navigate = useNavigate();
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date();
+  const localToday = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  )
+    .toISOString()
+    .split("T")[0];
 
   useEffect(() => {
     async function fetchVehicles() {
@@ -29,14 +37,17 @@ function VehicleDetails() {
             vehicleId: selectedVehicle._id,
             make: selectedVehicle.make,
             model: selectedVehicle.model,
-            pickupDate: today,
-            returnDate: today,
+            pickupDate: localToday,
+            returnDate: localToday,
             rentalDuration: 1,
             pickupAddress: "",
             dropOffAddress: "",
             deposit: 100,
             insurance: selectedVehicle.insurance || 0,
-            totalPrice: (selectedVehicle.dailyPrice || 0) + 100 + (selectedVehicle.insurance || 0),
+            totalPrice:
+              (selectedVehicle.dailyPrice || 0) +
+              100 +
+              (selectedVehicle.insurance || 0),
             cardNumber: "",
             expiryDate: "",
             cvv: "",
@@ -46,12 +57,13 @@ function VehicleDetails() {
             returnDeposit: "yes",
             pricePerDay: selectedVehicle.pricePerDay || 0,
             currentOdoMeter: selectedVehicle.currentOdoMeter,
+            fuelType: selectedVehicle.fuelType,
+            color:selectedVehicle.color
           });
         } else {
           setError("Vehicle not found");
         }
       } catch (error) {
-        console.error("Error fetching vehicles:", error);
         setError("Failed to fetch vehicles");
       }
     }
@@ -61,14 +73,39 @@ function VehicleDetails() {
         const response = await axios.get("http://localhost:3001/api/locations");
         setLocations(response.data);
       } catch (error) {
-        console.error("Error fetching locations:", error);
         setError("Failed to fetch locations");
       }
     }
 
+    const fetchRentalDates = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:3001/api/rentals/rentals/dates/${vehicle._id}`
+        );
+        setRentalDates(response.data.rentalDates);
+
+        // Create an array of disabled dates
+        const dates = response.data.rentalDates.flatMap((rental) => {
+          const start = new Date(rental.pickupDate);
+          const end = new Date(rental.returnDate);
+          const disabled = [];
+
+          while (start <= end) {
+            disabled.push(new Date(start));
+            start.setDate(start.getDate() + 1);
+          }
+
+          return disabled;
+        });
+        setDisabledDates(dates);
+      } catch (error) {
+      }
+    };
+
     fetchVehicles();
     fetchLocations();
-  }, [id, today]);
+    fetchRentalDates();
+  }, [id, localToday]);
 
   const calculateRentalDuration = (pickupDate, returnDate) => {
     const pickup = new Date(pickupDate);
@@ -78,13 +115,17 @@ function VehicleDetails() {
       : Math.ceil((returnD - pickup) / (1000 * 60 * 60 * 24));
   };
 
-  const calculateTotalPrice = (rentalDuration, pickupAddress, dropOffAddress) => {
+  const calculateTotalPrice = (
+    rentalDuration,
+    pickupAddress,
+    dropOffAddress
+  ) => {
     const locationFee = pickupAddress !== dropOffAddress ? 100 : 0;
     const insurance = booking.insurance || 0;
     const deposit = booking.deposit || 0;
 
     if (rentalDuration > 1) {
-      return deposit + (insurance * rentalDuration) + locationFee;
+      return deposit + insurance * rentalDuration + locationFee;
     } else {
       const basePrice = vehicle?.dailyPrice || 0;
       return basePrice + deposit + insurance + locationFee;
@@ -150,7 +191,6 @@ function VehicleDetails() {
       alert("Booking confirmed!");
       navigate("/Customerdashboard");
     } catch (error) {
-      console.error("Error:", error);
       setError("Failed to confirm the booking. Please try again.");
     } finally {
       setLoading(false);
@@ -162,7 +202,10 @@ function VehicleDetails() {
   }
 
   return (
-    <div className="vehicle-details container mt-3" style={{ fontSize: "12px" }}>
+    <div
+      className="vehicle-details container mt-3"
+      style={{ fontSize: "12px" }}
+    >
       <div className="mt-5">
         <div className="card p-4">
           <div className="row g-0">
@@ -178,11 +221,22 @@ function VehicleDetails() {
                 <h5 className="card-title">
                   {vehicle.make} {vehicle.model}
                 </h5>
-                <p><strong>Capacity:</strong> {vehicle.capacity || "5"} people</p>
-                <p><strong>Insurance:</strong> ${vehicle.insurance || "N/A"}</p>
-                <p><strong>Daily Price:</strong> ${vehicle.dailyPrice || "N/A"}</p>
-                <p><strong>Price per Mile:</strong> ${vehicle.pricePerDay || "N/A"}</p>
-                <p><strong>ODO Meter:</strong> {vehicle.currentOdoMeter || "N/A"}</p>
+                <p>
+                  <strong>Capacity:</strong> {vehicle.capacity || "5"} people
+                </p>
+                <p>
+                  <strong>Insurance:</strong> ${vehicle.insurance || "N/A"}
+                </p>
+                <p>
+                  <strong>Daily Price:</strong> ${vehicle.dailyPrice || "N/A"}
+                </p>
+                <p>
+                  <strong>Price per Mile:</strong> $
+                  {vehicle.pricePerDay || "N/A"}
+                </p>
+                <p>
+                  <strong>ODO Meter:</strong> {vehicle.currentOdoMeter || "N/A"}
+                </p>
               </div>
             </div>
           </div>
@@ -200,7 +254,7 @@ function VehicleDetails() {
                   onChange={handleInputChange}
                   className="form-control"
                   style={{ fontSize: "12px", padding: "6px", height: "32px" }}
-                  min={today}
+                  min={localToday}
                   required
                 />
               </div>
@@ -214,7 +268,7 @@ function VehicleDetails() {
                   onChange={handleInputChange}
                   className="form-control"
                   style={{ fontSize: "12px", padding: "6px", height: "32px" }}
-                  min={booking.pickupDate || today}
+                  min={booking.pickupDate || localToday}
                   required
                 />
               </div>
@@ -232,7 +286,9 @@ function VehicleDetails() {
                   <option value="">Select Pickup Location</option>
                   {locations.map((location) => (
                     <option key={location._id} value={location.name}>
-                      {location.name} {"("+location.address+")"}
+                      {location.name} {"(" + location.address + ")"}{" "}
+                      {"(" + location.city + ")"} {"(" + location.state + ")"}
+                      {"(" + location.zipCode + ")"}
                     </option>
                   ))}
                 </select>
@@ -253,7 +309,9 @@ function VehicleDetails() {
                   <option value="">Select Drop Location</option>
                   {locations.map((location) => (
                     <option key={location._id} value={location.name}>
-                      {location.name} {"("+location.address+")"}
+                      {location.name} {"(" + location.address + ")"}{" "}
+                      {"(" + location.city + ")"} {"(" + location.state + ")"}
+                      {"(" + location.zipCode + ")"}
                     </option>
                   ))}
                 </select>
@@ -267,7 +325,8 @@ function VehicleDetails() {
               <h6>Total Price: ${booking.totalPrice}</h6>
               {booking.rentalDuration > 1 && (
                 <p style={{ fontSize: "12px", color: "red" }}>
-                  Note: Price per mile will apply to the rental. Additional charges can be paid during drop-off.
+                  Note: Price per mile will apply to the rental. Additional
+                  charges can be paid during drop-off.
                 </p>
               )}
             </div>

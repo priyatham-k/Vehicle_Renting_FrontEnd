@@ -7,6 +7,9 @@ const OwnerLocationsSection = () => {
     id: null,
     name: "",
     address: "",
+    city: "",
+    state: "",
+    zipCode: "",
   });
   const [formErrors, setFormErrors] = useState({});
   const [showModal, setShowModal] = useState(false);
@@ -31,6 +34,9 @@ const OwnerLocationsSection = () => {
     let errors = {};
     if (!currentLocation.name) errors.name = "Location name is required.";
     if (!currentLocation.address) errors.address = "Address is required.";
+    if (!currentLocation.city) errors.city = "City is required.";
+    if (!currentLocation.state) errors.state = "State is required.";
+    if (!currentLocation.zipCode) errors.zipCode = "Zip code is required.";
     return errors;
   };
 
@@ -46,6 +52,9 @@ const OwnerLocationsSection = () => {
             {
               name: currentLocation.name,
               address: currentLocation.address,
+              city: currentLocation.city,
+              state: currentLocation.state,
+              zipCode: currentLocation.zipCode,
             }
           );
           setLocations((prevLocations) =>
@@ -60,11 +69,21 @@ const OwnerLocationsSection = () => {
             {
               name: currentLocation.name,
               address: currentLocation.address,
+              city: currentLocation.city,
+              state: currentLocation.state,
+              zipCode: currentLocation.zipCode,
             }
           );
           setLocations((prevLocations) => [...prevLocations, response.data.location]);
         }
-        setCurrentLocation({ id: null, name: "", address: "" });
+        setCurrentLocation({
+          id: null,
+          name: "",
+          address: "",
+          city: "",
+          state: "",
+          zipCode: "",
+        });
         setShowModal(false);
         setIsEditing(false);
       } catch (err) {
@@ -76,7 +95,14 @@ const OwnerLocationsSection = () => {
   };
 
   const handleEditClick = (location) => {
-    setCurrentLocation({ id: location._id, name: location.name, address: location.address });
+    setCurrentLocation({
+      id: location._id,
+      name: location.name,
+      address: location.address,
+      city: location.city,
+      state: location.state,
+      zipCode: location.zipCode,
+    });
     setIsEditing(true);
     setShowModal(true);
   };
@@ -100,7 +126,14 @@ const OwnerLocationsSection = () => {
       <button
         className="btn btn-primary btn-sm mb-3"
         onClick={() => {
-          setCurrentLocation({ id: null, name: "", address: "" });
+          setCurrentLocation({
+            id: null,
+            name: "",
+            address: "",
+            city: "",
+            state: "",
+            zipCode: "",
+          });
           setShowModal(true);
           setIsEditing(false);
         }}
@@ -119,6 +152,9 @@ const OwnerLocationsSection = () => {
           <tr>
             <th style={{ fontSize: "12px" }}>Location Name</th>
             <th style={{ fontSize: "12px" }}>Address</th>
+            <th style={{ fontSize: "12px" }}>City</th>
+            <th style={{ fontSize: "12px" }}>State</th>
+            <th style={{ fontSize: "12px" }}>Zip Code</th>
             <th style={{ fontSize: "12px", textAlign: "center" }}>Actions</th>
           </tr>
         </thead>
@@ -127,6 +163,9 @@ const OwnerLocationsSection = () => {
             <tr key={location._id}>
               <td style={{ fontSize: "12px" }}>{location.name}</td>
               <td style={{ fontSize: "12px" }}>{location.address}</td>
+              <td style={{ fontSize: "12px" }}>{location.city}</td>
+              <td style={{ fontSize: "12px" }}>{location.state}</td>
+              <td style={{ fontSize: "12px" }}>{location.zipCode}</td>
               <td style={{ textAlign: "center" }}>
                 <button
                   className="btn btn-sm btn-warning mx-1"
@@ -135,13 +174,13 @@ const OwnerLocationsSection = () => {
                 >
                   <i className="fas fa-edit"></i>
                 </button>
-                <button
+                {/* <button
                   className="btn btn-sm btn-danger mx-1"
                   onClick={() => handleDeleteClick(location._id)}
                   style={{ fontSize: "10px" }}
                 >
                   <i className="fas fa-trash"></i>
-                </button>
+                </button> */}
               </td>
             </tr>
           ))}
@@ -261,6 +300,99 @@ const OwnerLocationsSection = () => {
                         style={{ fontSize: "10px" }}
                       >
                         {formErrors.address}
+                      </div>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="city" style={{ fontSize: "12px" }}>
+                      City
+                    </label>
+                    <input
+                      type="text"
+                      className={`form-control form-control-sm ${
+                        formErrors.city && "is-invalid"
+                      }`}
+                      id="city"
+                      value={currentLocation.city}
+                      onChange={(e) =>
+                        setCurrentLocation({
+                          ...currentLocation,
+                          city: e.target.value,
+                        })
+                      }
+                      style={{
+                        fontSize: "12px",
+                        padding: "5px",
+                      }}
+                    />
+                    {formErrors.city && (
+                      <div
+                        className="invalid-feedback"
+                        style={{ fontSize: "10px" }}
+                      >
+                        {formErrors.city}
+                      </div>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="state" style={{ fontSize: "12px" }}>
+                      State
+                    </label>
+                    <input
+                      type="text"
+                      className={`form-control form-control-sm ${
+                        formErrors.state && "is-invalid"
+                      }`}
+                      id="state"
+                      value={currentLocation.state}
+                      onChange={(e) =>
+                        setCurrentLocation({
+                          ...currentLocation,
+                          state: e.target.value,
+                        })
+                      }
+                      style={{
+                        fontSize: "12px",
+                        padding: "5px",
+                      }}
+                    />
+                    {formErrors.state && (
+                      <div
+                        className="invalid-feedback"
+                        style={{ fontSize: "10px" }}
+                      >
+                        {formErrors.state}
+                      </div>
+                    )}
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="zipCode" style={{ fontSize: "12px" }}>
+                      Zip Code
+                    </label>
+                    <input
+                      type="text"
+                      className={`form-control form-control-sm ${
+                        formErrors.zipCode && "is-invalid"
+                      }`}
+                      id="zipCode"
+                      value={currentLocation.zipCode}
+                      onChange={(e) =>
+                        setCurrentLocation({
+                          ...currentLocation,
+                          zipCode: e.target.value,
+                        })
+                      }
+                      style={{
+                        fontSize: "12px",
+                        padding: "5px",
+                      }}
+                    />
+                    {formErrors.zipCode && (
+                      <div
+                        className="invalid-feedback"
+                        style={{ fontSize: "10px" }}
+                      >
+                        {formErrors.zipCode}
                       </div>
                     )}
                   </div>

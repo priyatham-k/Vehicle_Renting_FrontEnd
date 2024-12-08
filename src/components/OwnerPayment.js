@@ -18,7 +18,6 @@ const OwnerPayment = () => {
           setPayments([]);
           setError(null); // Clear any existing error messages
         } else {
-          console.error("Error fetching owner payments:", err);
           setError("Failed to load payments. Please try again later.");
         }
         setLoading(false);

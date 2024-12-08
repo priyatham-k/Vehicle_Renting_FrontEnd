@@ -5,7 +5,6 @@ const OwnerVehicleCard = ({
   handleDeleteVehicle,
   handleUpdateVehicle,
 }) => {
-  console.log(vehicle);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({
     make: vehicle.make,
@@ -17,6 +16,8 @@ const OwnerVehicleCard = ({
     dailyPrice: vehicle.dailyPrice,
     pricePerDay: vehicle.pricePerDay,
     imageUrl: vehicle.imageUrl,
+    fuelType: vehicle.fuelType,
+    color: vehicle.color,
   });
 
   const handleEditChange = (e) => {
@@ -30,7 +31,6 @@ const OwnerVehicleCard = ({
       await handleUpdateVehicle(vehicle._id, editForm);
       setShowEditModal(false);
     } catch (error) {
-      console.error("Error updating vehicle:", error);
       alert("Failed to update vehicle. Please try again.");
     }
   };
@@ -105,6 +105,12 @@ const OwnerVehicleCard = ({
                 <strong>Type:</strong> {vehicle.type}
               </p>
               <p style={{ fontSize: "12px", margin: "2.5px 0", color: "#555" }}>
+                <strong>Fuel Type:</strong> {vehicle.fuelType}
+              </p>
+              <p style={{ fontSize: "12px", margin: "2.5px 0", color: "#555" }}>
+                <strong>Color:</strong> {vehicle.color}
+              </p>
+              <p style={{ fontSize: "12px", margin: "2.5px 0", color: "#555" }}>
                 <strong>Insurance Cost:</strong>{" "}
                 <span style={{ fontSize: "10px" }}>${vehicle.insurance}</span>
               </p>
@@ -119,7 +125,7 @@ const OwnerVehicleCard = ({
                 <strong>Price / Mile (More than 1 day):</strong>{" "}
                 <span style={{ fontSize: "10px" }}>${vehicle.pricePerDay}</span>
               </p>
-              <p style={{ fontSize: "12px", margin: "2.5px 0", color: "#555" }}>
+              {/* <p style={{ fontSize: "12px", margin: "2.5px 0", color: "#555" }}>
                 <strong>Status:</strong>{" "}
                 <span
                   className="text-bg-success"
@@ -127,7 +133,7 @@ const OwnerVehicleCard = ({
                 >
                   {vehicle.status}
                 </span>
-              </p>
+              </p> */}
             </div>
             <div
               className="text-right"
@@ -270,6 +276,25 @@ const OwnerVehicleCard = ({
                                     <option value="car">Car</option>
                                     <option value="truck">Truck</option>
                                     <option value="suv">SUV</option>
+                                  </select>
+                                ) : key === "fuelType" ? (
+                                  // Fuel Type Dropdown
+                                  <select
+                                    id={key}
+                                    name={key}
+                                    value={editForm[key]}
+                                    onChange={handleEditChange}
+                                    className="form-control"
+                                    style={{
+                                      fontSize: "12px",
+                                      padding: "8px",
+                                      marginBottom: "10px",
+                                      borderRadius: "4px",
+                                    }}
+                                    required
+                                  >
+                                    <option value="ev">EV</option>
+                                    <option value="gas">Gas</option>
                                   </select>
                                 ) : (
                                   // Other Fields

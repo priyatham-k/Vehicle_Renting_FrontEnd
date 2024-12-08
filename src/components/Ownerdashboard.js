@@ -29,6 +29,8 @@ function Ownerdashboard() {
     mileage: "",
     pricePerDay: "",
     currentOdoMeter: "",
+    fuelType: "",
+    color: "",
   });
   const [formErrors, setFormErrors] = useState({});
   const labelStyle = {
@@ -48,7 +50,6 @@ function Ownerdashboard() {
     boxSizing: "border-box",
   };
 
-  // Fetch vehicles and rentals data on component mount
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
@@ -60,7 +61,6 @@ function Ownerdashboard() {
         setError("Failed to fetch vehicles data.");
       }
     };
-
     const fetchRentals = async () => {
       try {
         const rentalsResponse = await axios.get(
@@ -71,23 +71,23 @@ function Ownerdashboard() {
         setError("Failed to fetch rentals data.");
       }
     };
-
     fetchVehicles();
     fetchRentals();
   }, []);
 
-
   const handleUpdateVehicle = async (vehicleId, updatedData) => {
     try {
       // Make the API call to update the vehicle
-      await axios.put(`http://localhost:3001/api/vehicles/update/${vehicleId}`, updatedData);
-  
+      await axios.put(
+        `http://localhost:3001/api/vehicles/update/${vehicleId}`,
+        updatedData
+      );
+
       // Fetch the updated list of vehicles
       const response = await axios.get("http://localhost:3001/api/vehicles");
       setVehicles(response.data); // Update the state with the latest data
     } catch (error) {
       setError("Failed to update the vehicle");
-      console.error("Error updating vehicle:", error);
     }
   };
 
@@ -107,6 +107,8 @@ function Ownerdashboard() {
       errors.pricePerDay = "Price per Day is required";
     if (!newVehicle.currentOdoMeter)
       errors.currentOdoMeter = "Current Odometer is required";
+    if (!newVehicle.fuelType) errors.fuelType = "Fuel Type is required";
+    if (!newVehicle.color) errors.color = "Color is required";
     return errors;
   };
   // Handle form submission
@@ -123,14 +125,14 @@ function Ownerdashboard() {
           setFormErrors({ vinNumber: "VIN Number must be unique" });
           return;
         }
-  
+
         // Submit the new vehicle
         await axios.post("http://localhost:3001/api/vehicles/add", newVehicle);
-  
+
         // Fetch the updated list of vehicles
         const response = await axios.get("http://localhost:3001/api/vehicles");
         setVehicles(response.data); // Update the state with the latest data
-  
+
         // Reset the form and close the modal
         setNewVehicle({
           make: "",
@@ -144,6 +146,8 @@ function Ownerdashboard() {
           mileage: "",
           pricePerDay: "",
           currentOdoMeter: "",
+          fuelType: "",
+          color: "",
         });
         setShowModal(false);
       } catch (error) {
@@ -153,7 +157,6 @@ function Ownerdashboard() {
       setFormErrors(errors);
     }
   };
-  
 
   // Handle input changes
   const handleInputChange = (e) => {
@@ -162,7 +165,6 @@ function Ownerdashboard() {
       [e.target.name]: e.target.value,
     });
   };
-
   // Handle image uploads
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -209,11 +211,9 @@ function Ownerdashboard() {
                 />
               )}
               {activeSection === "rentals" && (
-                <OwnerRentalsSection rentals={rentals} />
+                <OwnerRentalsSection rentals={rentals} vehicles={vehicles} />
               )}
-              {activeSection === "ownerPayments" && (
-                <OwnerPayment />
-              )}
+              {activeSection === "ownerPayments" && <OwnerPayment />}
               {activeSection === "earnings" && <Earnings rentals={rentals} />}
               {activeSection === "locations" && (
                 <OwnerLocationsSection
@@ -413,7 +413,55 @@ function Ownerdashboard() {
                       )}
                     </div>
                   </div>
-
+                  <div className="form-row">
+                    <div className="form-group col-md-6">
+                      <label htmlFor="fuelType" style={labelStyle}>
+                        Fuel Type
+                      </label>
+                      <select
+                        className={`form-control ${
+                          formErrors.fuelType && "is-invalid"
+                        }`}
+                        id="fuelType"
+                        name="fuelType"
+                        value={newVehicle.fuelType}
+                        onChange={handleInputChange}
+                        required
+                        style={inputStyle}
+                      >
+                        <option value="">Select Fuel Type</option>
+                        <option value="ev">Electric Vehicle (EV)</option>
+                        <option value="gas">Gas</option>
+                      </select>
+                      {formErrors.fuelType && (
+                        <div className="invalid-feedback">
+                          {formErrors.fuelType}
+                        </div>
+                      )}
+                    </div>
+                    <div className="form-group col-md-6">
+                      <label htmlFor="color" style={labelStyle}>
+                        Color
+                      </label>
+                      <input
+                        type="text"
+                        className={`form-control ${
+                          formErrors.color && "is-invalid"
+                        }`}
+                        id="color"
+                        name="color"
+                        value={newVehicle.color}
+                        onChange={handleInputChange}
+                        required
+                        style={inputStyle}
+                      />
+                      {formErrors.color && (
+                        <div className="invalid-feedback">
+                          {formErrors.color}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                   {/* Price Per Day and VIN Number */}
                   <div className="form-row">
                     <div className="form-group col-md-6">

@@ -27,7 +27,6 @@ const CustomerPayment = () => {
           setPayments([]);
           setError(null); // Clear any existing error messages
         } else {
-          console.error("Error fetching payments:", err);
           setError("Failed to fetch payments.");
         }
         setLoading(false);

@@ -10,43 +10,36 @@ function Login() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const handleLogin = async (e, userType) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError(null);
 
-    const apiUrls = {
-      customer: "http://localhost:3001/api/customers/login",
-      owner: "http://localhost:3001/api/admin/login",
-    };
-
-    const loginUrl = apiUrls[userType];
-    if (!loginUrl) {
-      setError("Invalid user type. Please select a valid role.");
-      return;
-    }
-
     try {
-      const response = await axios.post(loginUrl, { email, password });
+      const response = await axios.post("http://localhost:3001/api/customers/bothLogin", { email, password });
 
       if (response.status === 200) {
-        const userDetails = response.data;
+        const { token, customer, admin } = response.data;
 
         // Store user details in session storage
-        sessionStorage.setItem("userDetails", JSON.stringify(userDetails));
-
-        // Navigate based on user role
-        if (userType === "customer") {
+        if (customer) {
+          sessionStorage.setItem(
+            "userDetails",
+            JSON.stringify({ token, ...response.data })
+          );
           navigate("/customerdashboard");
-        } else if (userType === "owner") {
+        } else if (admin) {
+          sessionStorage.setItem(
+            "userDetails",
+            JSON.stringify({ token, ...response.data })
+          );
           navigate("/ownerdashboard");
         } else {
-          setError("Invalid role detected. Please try again.");
+          setError("Invalid user role detected. Please try again.");
         }
       } else {
         setError("Login failed. Please check your credentials.");
       }
     } catch (err) {
-      console.error("Login error:", err);
       setError("Failed to login. Please check your credentials.");
     }
   };
@@ -94,15 +87,9 @@ function Login() {
                 )}
                 <button
                   className="btn btn-primary btn-user btn-block small-btn"
-                  onClick={(e) => handleLogin(e, "customer")}
+                  onClick={handleLogin}
                 >
-                  Customer Login
-                </button>
-                <button
-                  className="btn btn-danger btn-user btn-block small-btn"
-                  onClick={(e) => handleLogin(e, "owner")}
-                >
-                  Admin Login
+                  Login
                 </button>
               </form>
               <hr />

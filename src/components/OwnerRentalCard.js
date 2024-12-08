@@ -1,21 +1,54 @@
-import React, { useEffect } from "react";
-
-// Helper function to calculate days between two dates
-const calculateDaysRented = (pickupDate, returnDate) => {
-  const pickup = new Date(pickupDate);
-  const drop = new Date(returnDate);
-  return Math.floor((drop - pickup) / (1000 * 60 * 60 * 24));
-};
-
-const OwnerRentalCard = ({ rental }) => {
-  console.log(rental);
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import DropOffModal from "./DropOffModal";
+const OwnerRentalCard = ({rental, vehicles, error }) => {
   // Extract the customer's name from the email (prefix before @)
   const rentedBy = rental.customerId?.firstName || "Unknown";
+  const [showDropOffModal, setShowDropOffModal] = useState(false);
+  const [dropOffOdometer, setDropOffOdometer] = useState("");
+  const [odometerDifference, setOdometerDifference] = useState(0);
+  const [totalCharge, setTotalCharge] = useState(0);
+  const [currentRental, setCurrentRental] = useState(null);
+  const [rentals, setRentals] = useState([]);
 
-  useEffect(() => {
-    console.log("Rental Details:", rental);
-  }, [rental]);
 
+  const handleDropOff = async () => {
+    setOdometerDifference("");
+    setDropOffOdometer("");
+    setShowDropOffModal(true);
+  };
+  const handlePaymentSubmit = async () => {
+    try {
+      const response = await axios.put(
+        `http://localhost:3001/api/rentals/dropoff/${rental._id}`,
+        {
+          totalCharge: rental.totalPrice,
+          newOdometer: dropOffOdometer,
+        }
+      );
+      if (response?.data?.rental?.vehicleId !== null) {
+        alert("Vehicle drop-off completed successfully!....Page will Fetching Latest Data...");
+        setShowDropOffModal(false);
+        window.location.reload();
+      } 
+    } catch (error) {
+      
+    }
+  };
+  const handleDropOffSubmit = () => {
+    if (parseInt(dropOffOdometer) <= parseInt(rental.currentOdoMeter)) {
+      alert(
+        "Drop-off odometer reading should be higher than the previous reading."
+      );
+      return;
+    }
+    const difference =
+      parseInt(dropOffOdometer) - parseInt(rental.currentOdoMeter);
+    const charge =
+      parseInt(difference) * parseInt(rental?.vehicleId?.pricePerDay);
+    setOdometerDifference(difference);
+    setTotalCharge(charge);
+  };
   return (
     <div className="col-md-6 mb-3">
       <div className="card card-custom position-relative">
@@ -114,9 +147,43 @@ const OwnerRentalCard = ({ rental }) => {
                 <strong>Days Rented:</strong> {rental.rentalDuration} days
               </p>
             </div>
+            <div
+              className="text-right"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "10px",
+              }}
+            >
+              {rental.status === "active" && (
+                <button
+                  className="btn btn-info btn-sm"
+                  onClick={handleDropOff}
+                  style={{
+                    fontSize: "10px",
+                    padding: "5px 7px",
+                    borderRadius: "4px",
+                    color: "white",
+                  }}
+                >
+                  Drop Off
+                </button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      </div>{" "}
+      <DropOffModal
+        isOpen={showDropOffModal}
+        onClose={() => setShowDropOffModal(false)}
+        rental={rental}
+        setDropOffOdometer={setDropOffOdometer}
+        totalCharge={totalCharge}
+        odometerDifference={odometerDifference}
+        onPaymentSubmit={handlePaymentSubmit}
+        onCalculate={handleDropOffSubmit}
+      />
     </div>
   );
 };

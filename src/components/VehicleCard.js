@@ -8,15 +8,13 @@ const VehicleCard = ({ vehicle, isRental, onCancelRental, onDropOff,reviewAdded 
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [reviewError, setReviewError] = useState("");
   const [newReview, setNewReview] = useState("");
-
+  const [rentalDates, setRentalDates] = useState([]);
+  const [disabledDates, setDisabledDates] = useState([]);
   const customerId = JSON.parse(sessionStorage.getItem("userDetails"))?.customer
     ?.id;
-
   const fetchReviews = async () => {
     setLoadingReviews(true);
     setReviewError("");
-    console.log(vehicle);
-    console.log(isRental)
     try {
       const Id = isRental ? vehicle?.vehicleId?._id:vehicle._id
       const response = await axios.get(
@@ -24,7 +22,6 @@ const VehicleCard = ({ vehicle, isRental, onCancelRental, onDropOff,reviewAdded 
       );
       setReviews(response.data);
     } catch (error) {
-      console.error("Error fetching reviews:", error);
       setReviewError("Failed to load reviews. Please try again later.");
     } finally {
       setLoadingReviews(false);
@@ -49,11 +46,49 @@ const VehicleCard = ({ vehicle, isRental, onCancelRental, onDropOff,reviewAdded 
       alert("Review added successfully!");
       reviewAdded()
     } catch (error) {
-      console.error("Error adding review:", error);
       alert("Failed to add review. Please try again later.");
     }
   };
-
+ 
+  useEffect(() => {
+    const fetchRentalDates = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:3001/api/rentals/rentals/dates/${vehicle._id}`
+        );
+  
+        console.log(response.data.rentalDates)
+        setRentalDates(response.data.rentalDates);
+      } catch (error) {
+        console.error("Error fetching rental dates:", error);
+      }
+    };
+  
+    fetchRentalDates();
+  }, [vehicle._id]);
+  
+  const isVehicleAvailableForBooking = () => {
+    const today = new Date();
+    const localToday = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    )
+      .toISOString()
+      .split("T")[0]; // Format as "YYYY-MM-DD"
+  
+    // Check if today's date falls within any rental period
+    const isBookedForToday = rentalDates.some((rental) => {
+      const rentalStart = new Date(rental.pickupDate).toISOString().split("T")[0];
+      const rentalEnd = new Date(rental.returnDate).toISOString().split("T")[0];
+  
+      return localToday >= rentalStart && localToday <= rentalEnd; // Check if today is within the rental range
+    });
+  
+    return !isBookedForToday; // Available if not booked for today
+  };
+  
+    
   return (
     <div className="col-md-6 mb-3">
       <div
@@ -127,6 +162,11 @@ const VehicleCard = ({ vehicle, isRental, onCancelRental, onDropOff,reviewAdded 
                 <strong>Type:</strong> {vehicle.type || "N/A"}
               </p>
               <p style={{ fontSize: "12px", margin: "2.5px 0", color: "#555" }}>
+                <strong>Fuel Type:</strong> {vehicle.fuelType || "N/A"}
+              </p><p style={{ fontSize: "12px", margin: "2.5px 0", color: "#555" }}>
+                <strong>Color:</strong> {vehicle.color || "N/A"}
+              </p>
+              <p style={{ fontSize: "12px", margin: "2.5px 0", color: "#555" }}>
                 <strong>Insurance Cost:</strong>{" "}
                 <span style={{ fontSize: "10px" }}>
                   ${vehicle.insurance || "N/A"}
@@ -173,7 +213,7 @@ const VehicleCard = ({ vehicle, isRental, onCancelRental, onDropOff,reviewAdded 
                   >
                     Cancel
                   </button>
-                  <button
+                  {/* <button
                     className="btn btn-success btn-sm"
                     onClick={() => onDropOff(vehicle)}
                     style={{
@@ -183,10 +223,10 @@ const VehicleCard = ({ vehicle, isRental, onCancelRental, onDropOff,reviewAdded 
                     }}
                   >
                     Drop Off
-                  </button>
+                  </button> */}
                 </>
               ) : (
-                !isRental && (
+                !isRental &&  (isVehicleAvailableForBooking() || vehicle.status === "available") && (
                   <Link
                     to={`/vehicle/${vehicle._id}`}
                     className="btn btn-primary btn-sm"
