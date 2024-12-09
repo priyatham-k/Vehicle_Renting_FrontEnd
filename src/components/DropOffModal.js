@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 const DropOffModal = ({
   isOpen,
@@ -9,10 +9,10 @@ const DropOffModal = ({
   onCalculate,
   totalCharge,
   onPaymentSubmit,
-  creditCard,
-  handleCreditCardChange,
   odometerDifference,
 }) => {
+  const [crashOption, setCrashOption] = useState("No");
+
   if (!isOpen) return null;
 
   return (
@@ -33,6 +33,24 @@ const DropOffModal = ({
               placeholder="Enter odometer reading"
             />
           </label>
+
+          <label className="modal-label">
+            Was there a crash?
+            <select
+              value={crashOption}
+              onChange={(e) => setCrashOption(e.target.value)}
+              className="modal-input"
+            >
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </label>
+
+          {crashOption === "Yes" && (
+            <p className="crash-warning">
+              <strong>Note:</strong> Additional charges will apply after inspection.
+            </p>
+          )}
 
           {rental.rentalDuration > 1 ? (
             <button className="calculate-button" onClick={onCalculate}>
@@ -171,20 +189,6 @@ const DropOffModal = ({
           border: 1px solid #ddd;
           text-align: left;
         }
-        .credit-card-fields .row {
-          display: flex;
-          gap: 10px;
-          justify-content: space-between;
-        }
-        .modal-label.half-width {
-          width: 48%;
-        }
-        .modal-label.full-width {
-          width: 100%;
-        }
-        .modal-input.small-input {
-          width: 100%;
-        }
         .pay-button {
           margin-top: 20px;
           padding: 10px 20px;
@@ -195,6 +199,13 @@ const DropOffModal = ({
           border-radius: 5px;
           cursor: pointer;
           width: 100%;
+        }
+        .crash-warning {
+          color: #d9534f;
+          font-size: 14px;
+          font-weight: bold;
+          margin-top: 10px;
+          text-align: center;
         }
       `}</style>
     </div>
