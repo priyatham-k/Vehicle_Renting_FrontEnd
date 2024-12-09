@@ -53,7 +53,7 @@ function VehicleDetails() {
             cvv: "",
             imageUrl: selectedVehicle.imageUrl,
             type: selectedVehicle.type,
-            status: "active",
+            status: "Waiting For Approval",
             returnDeposit: "yes",
             pricePerDay: selectedVehicle.pricePerDay || 0,
             currentOdoMeter: selectedVehicle.currentOdoMeter,

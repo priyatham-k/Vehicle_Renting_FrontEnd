@@ -1,22 +1,25 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import DropOffModal from "./DropOffModal";
-const OwnerRentalCard = ({rental, vehicles, error }) => {
+
+const OwnerRentalCard = ({ rental, vehicles, error }) => {
   // Extract the customer's name from the email (prefix before @)
   const rentedBy = rental.customerId?.firstName || "Unknown";
   const [showDropOffModal, setShowDropOffModal] = useState(false);
   const [dropOffOdometer, setDropOffOdometer] = useState("");
   const [odometerDifference, setOdometerDifference] = useState(0);
   const [totalCharge, setTotalCharge] = useState(0);
-  const [currentRental, setCurrentRental] = useState(null);
-  const [rentals, setRentals] = useState([]);
-
+  const [startingOdometer, setStartingOdometer] = useState("");
+  const [fuelLevel, setFuelLevel] = useState("full");
+  const [pickupTime, setPickupTime] = useState("");
+  const [showApproveFields, setShowApproveFields] = useState(false);
 
   const handleDropOff = async () => {
     setOdometerDifference("");
     setDropOffOdometer("");
     setShowDropOffModal(true);
   };
+
   const handlePaymentSubmit = async () => {
     try {
       const response = await axios.put(
@@ -27,14 +30,15 @@ const OwnerRentalCard = ({rental, vehicles, error }) => {
         }
       );
       if (response?.data?.rental?.vehicleId !== null) {
-        alert("Vehicle drop-off completed successfully!....Page will Fetching Latest Data...");
+        alert(
+          "Vehicle drop-off completed successfully!....Page will Fetching Latest Data..."
+        );
         setShowDropOffModal(false);
         window.location.reload();
-      } 
-    } catch (error) {
-      
-    }
+      }
+    } catch (error) {}
   };
+
   const handleDropOffSubmit = () => {
     if (parseInt(dropOffOdometer) <= parseInt(rental.currentOdoMeter)) {
       alert(
@@ -49,6 +53,38 @@ const OwnerRentalCard = ({rental, vehicles, error }) => {
     setOdometerDifference(difference);
     setTotalCharge(charge);
   };
+
+  const handleApprove = async () => {
+    try {
+      const payload = {
+        startingOdometer,
+        fuelLevel,
+        pickupTime,
+      };
+  
+      // Log the fields for debugging
+      console.log("Payload for approval:", payload);
+  
+      // Make an API call to update the rental
+      const response = await axios.put(
+        `http://localhost:3001/api/rentals/rentalUpdate/${rental._id}`, // Adjust the URL to your backend route
+        payload
+      );
+  
+      if (response.status === 200) {
+        alert("Approval process completed successfully!");
+        // Optionally refresh or update the UI
+        window.location.reload();
+      } else {
+        alert("Failed to approve rental. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error approving rental:", error);
+      alert("An error occurred while approving the rental.");
+    }
+  };
+  
+
   return (
     <div className="col-md-6 mb-3">
       <div className="card card-custom position-relative">
@@ -170,10 +206,67 @@ const OwnerRentalCard = ({rental, vehicles, error }) => {
                   Drop Off
                 </button>
               )}
+
+              {rental.status === "Waiting For Approval" && (
+                <button
+                  className="btn btn-success btn-sm"
+                  onClick={() => setShowApproveFields(true)}
+                  style={{
+                    fontSize: "10px",
+                    padding: "5px 7px",
+                    borderRadius: "4px",
+                    color: "white",
+                  }}
+                >
+                  Approve
+                </button>
+              )}
             </div>
           </div>
         </div>
-      </div>{" "}
+
+        {/* Approval Fields */}
+        {showApproveFields && (
+          <div className="approval-fields" style={{ marginTop: "10px" }}>
+            <div>
+              <label>Starting Odometer:</label>
+              <input
+                type="number"
+                className="form-control"
+                value={startingOdometer}
+                onChange={(e) => setStartingOdometer(e.target.value)}
+              />
+            </div>
+            <div>
+              <label>Fuel Level:</label>
+              <select
+                className="form-control"
+                value={fuelLevel}
+                onChange={(e) => setFuelLevel(e.target.value)}
+              >
+                <option value="Full">Full</option>
+                <option value="Half">Half</option>
+                <option value="Almost Empty">Almost Empty</option>
+              </select>
+            </div>
+            <div>
+              <label>Pickup Time:</label>
+              <input
+                type="datetime-local"
+                className="form-control"
+                value={pickupTime}
+                onChange={(e) => setPickupTime(e.target.value)}
+              />
+            </div>
+            <button
+              className="btn btn-primary btn-sm mt-2"
+              onClick={handleApprove}
+            >
+              Submit Approval
+            </button>
+          </div>
+        )}
+      </div>
       <DropOffModal
         isOpen={showDropOffModal}
         onClose={() => setShowDropOffModal(false)}
